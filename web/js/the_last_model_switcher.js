@@ -344,6 +344,42 @@ app.registerExtension({
         /* Default wider size */
         node.size[0] = Math.max(node.size[0], 380);
 
+        /* Welcome text on first create */
+        requestAnimationFrame(()=>{
+            const welcome = [
+                "THE LAST MODEL SWITCHER",
+                "by Maxomarai",
+                "================================================",
+                "",
+                "  GETTING STARTED:",
+                "",
+                "  1. Select a model from the dropdown above",
+                "     (only models you have downloaded appear)",
+                "",
+                "  2. Write your prompt in the text fields",
+                "",
+                "  3. Connect outputs to your workflow:",
+                "     MODEL    -> KSampler",
+                "     positive -> KSampler (positive)",
+                "     negative -> KSampler (negative)",
+                "     VAE      -> VAE Decode",
+                "     width    -> EmptyLatentImage",
+                "     height   -> EmptyLatentImage",
+                "",
+                "  Everything else is automatic!",
+                "",
+                "  BUTTONS:",
+                "  Scan for New Models  - find models in your folders",
+                "  AI Identify Model    - use AI for optimal settings",
+                "  Edit Presets File    - customize presets manually",
+                "",
+                "================================================",
+            ].join("\n");
+            if(!getName(node)){
+                showText(node, welcome);
+            }
+        });
+
         /*
          * Polling approach: DynamicCombo sub-inputs (resolution, megapixels,
          * clip_variant) don't reliably trigger onWidgetChanged. Instead we
