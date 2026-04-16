@@ -300,8 +300,14 @@ app.registerExtension({
          * poll every 500ms and detect changes by comparing current values
          * to the last seen state. This is lightweight and reliable.
          */
-        let lastState = { model: "", resolution: "", megapixels: "", clip: "" };
+        let lastState = { model: "", resolution: "", megapixels: "", clip: "",
+                          width: "", height: "", steps: "", cfg: "", guidance: "" };
         let updateTimer = null;
+
+        function getWidgetVal(name){
+            const w = node.widgets?.find(w => w.name === name);
+            return w ? String(w.value) : "";
+        }
 
         function getCurrentState(){
             return {
@@ -309,12 +315,26 @@ app.registerExtension({
                 resolution: getResolution(node),
                 megapixels: getMegapixels(node),
                 clip: (findWidget(node, "clip_variant") || {}).value || "",
+                width: getWidgetVal("width"),
+                height: getWidgetVal("height"),
+                steps: getWidgetVal("steps"),
+                cfg: getWidgetVal("cfg"),
+                guidance: getWidgetVal("guidance"),
             };
         }
 
-        function stateChanged(a, b){
+        function presetChanged(a, b){
             return a.model !== b.model || a.resolution !== b.resolution
                 || a.megapixels !== b.megapixels || a.clip !== b.clip;
+        }
+
+        function valuesChanged(a, b){
+            return a.width !== b.width || a.height !== b.height
+                || a.steps !== b.steps || a.cfg !== b.cfg || a.guidance !== b.guidance;
+        }
+
+        function stateChanged(a, b){
+            return presetChanged(a, b) || valuesChanged(a, b);
         }
 
         /* Read current widget values and push to connected nodes */
@@ -335,22 +355,32 @@ app.registerExtension({
 
         async function handleChange(cur, prev){
             if(!cur.model) return;
-            clearTimeout(updateTimer);
-            updateTimer = setTimeout(async()=>{
-                try{
-                    const i = await fetchInfo(cur.model);
-                    const modelChanged = cur.model !== prev.model;
 
-                    if(modelChanged){
-                        populateAll(node, i, cur.resolution, cur.megapixels);
-                    } else {
-                        updateResolution(node, i, cur.resolution, cur.megapixels);
-                    }
+            const presetDidChange = presetChanged(cur, prev);
+            const valuesDidChange = valuesChanged(cur, prev);
 
-                    showText(node, formatInfo(i));
-                    pushCurrentValues();
-                }catch(e){showText(node,"Error: "+e.message)}
-            }, 100);
+            if(presetDidChange){
+                /* Model/resolution/megapixels/clip changed -> fetch info and update */
+                clearTimeout(updateTimer);
+                updateTimer = setTimeout(async()=>{
+                    try{
+                        const i = await fetchInfo(cur.model);
+                        const modelChanged = cur.model !== prev.model;
+
+                        if(modelChanged){
+                            populateAll(node, i, cur.resolution, cur.megapixels);
+                        } else {
+                            updateResolution(node, i, cur.resolution, cur.megapixels);
+                        }
+
+                        showText(node, formatInfo(i));
+                        pushCurrentValues();
+                    }catch(e){showText(node,"Error: "+e.message)}
+                }, 100);
+            } else if(valuesDidChange){
+                /* Only value widgets changed (user typed) -> push to connected nodes */
+                pushCurrentValues();
+            }
         }
 
         /* Poll for changes */
