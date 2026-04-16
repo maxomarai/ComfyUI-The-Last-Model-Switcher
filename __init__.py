@@ -5,6 +5,10 @@ import json
 import logging
 import math
 import os
+import re
+import struct
+import urllib.error
+import urllib.request
 
 import torch
 from aiohttp import web
@@ -256,29 +260,29 @@ def _get_ai_settings() -> dict:
     return settings
 
 
-def _resolve_ai_config(overrides: dict = None) -> dict:
-    """Resolve AI config from settings, env vars, and overrides."""
+def _resolve_ai_config() -> dict:
+    """Resolve AI config from saved settings and environment variables.
+
+    Security: API keys are NEVER accepted from HTTP request bodies.
+    They can only come from ComfyUI's settings file or env vars."""
     settings = _get_ai_settings()
-    provider = (overrides or {}).get("provider") or settings.get("provider") or "anthropic"
+    provider = settings.get("provider") or "anthropic"
     defaults = _PROVIDER_DEFAULTS.get(provider, _PROVIDER_DEFAULTS["anthropic"])
 
-    api_key = (overrides or {}).get("api_key") or settings.get("api_key") or ""
+    api_key = settings.get("api_key") or ""
     if not api_key and defaults["env_key"]:
         api_key = os.environ.get(defaults["env_key"], "")
 
     return {
         "provider": provider,
         "api_key": api_key,
-        "base_url": (overrides or {}).get("base_url") or settings.get("base_url") or defaults["base_url"],
-        "model": (overrides or {}).get("model") or settings.get("model") or defaults["model"],
+        "base_url": settings.get("base_url") or defaults["base_url"],
+        "model": settings.get("model") or defaults["model"],
     }
 
 
 def _call_ai(prompt_text: str, config: dict, max_tokens: int = 500) -> str:
     """Call AI API (Anthropic or OpenAI-compatible). Returns response text."""
-    import urllib.request
-    import urllib.error
-
     provider = config["provider"]
     api_key = config["api_key"]
     base_url = config["base_url"]
@@ -348,7 +352,7 @@ async def ai_identify_api(request):
     """Use AI to identify a model and suggest optimal settings."""
     data = await request.json()
     preset_name = data.get("preset_name", "")
-    config = _resolve_ai_config(data.get("ai_config"))
+    config = _resolve_ai_config()
 
     if not config["api_key"] and config["provider"] != "custom":
         return web.json_response({"error": "No API key configured. Click 'AI Settings' to set up your AI provider."}, status=400)
@@ -453,7 +457,7 @@ async def enhance_prompt_api(request):
     clip_type = data.get("clip_type", "")
     style = data.get("style", "enhance")
     custom_instruction = data.get("custom_instruction", "")
-    config = _resolve_ai_config(data.get("ai_config"))
+    config = _resolve_ai_config()
 
     if not config["api_key"] and config["provider"] != "custom":
         return web.json_response({"error": "No API key configured. Click 'AI Settings' to set up your AI provider."}, status=400)
@@ -509,9 +513,8 @@ def _read_safetensors_keys(filepath: str) -> list[str]:
     """Read tensor key names from safetensors header without loading weights.
     Uses raw header parsing (no safetensors library needed, instant)."""
     try:
-        import struct as _struct
         with open(filepath, "rb") as f:
-            header_len = _struct.unpack("<Q", f.read(8))[0]
+            header_len = struct.unpack("<Q", f.read(8))[0]
             if header_len > 100_000_000:  # Sanity check: header > 100MB is invalid
                 return []
             header_json = f.read(header_len).decode("utf-8")
@@ -568,7 +571,6 @@ def _detect_model_type(filepath: str) -> dict | None:
     is_distilled = is_turbo or is_lightning or is_lcm or "distill" in name_lower
 
     # Detect step count from filename (e.g. "4step", "8step")
-    import re
     step_match = re.search(r"(\d+)\s*step", name_lower)
     distilled_steps = int(step_match.group(1)) if step_match else (4 if is_turbo or is_lightning else 8 if is_lcm else 0)
 
@@ -930,10 +932,11 @@ class TheLastModelSwitcher(io.ComfyNode):
     text encoder goes with which model.
 
     OUTPUTS:
-      MODEL / CLIP / VAE         Core model components ready for KSampler
+      MODEL / VAE                Core model components ready for KSampler
       positive / negative        CONDITIONING from your prompt (negative is empty for Flux)
       width / height             Resolution (preset, custom, or megapixel-scaled)
       steps / cfg / guidance     Sampler settings (preset defaults or your overrides)
+      seed                       Seed value for reproducibility
     """
 
     @classmethod
@@ -993,7 +996,7 @@ class TheLastModelSwitcher(io.ComfyNode):
                 io.Int.Output(display_name="steps"),
                 io.Float.Output(display_name="cfg"),
                 io.Float.Output(display_name="guidance",
-                    tooltip="Flux guidance value (0 = N/A). Connect to FluxGuidance node."),
+                    tooltip="Flux guidance value. Applied automatically to positive conditioning."),
                 io.Int.Output(display_name="seed",
                     tooltip="Seed value. Connect to KSampler seed input."),
             ],
@@ -1012,6 +1015,8 @@ class TheLastModelSwitcher(io.ComfyNode):
         guidance: float = 3.5,
         weight_dtype: str = "default",
     ) -> io.NodeOutput:
+
+        # ── Parse preset config ──
         presets = load_presets()
         preset_name = model["model"]
         clip_variant = model.get("clip_variant")
@@ -1030,7 +1035,7 @@ class TheLastModelSwitcher(io.ComfyNode):
         clip_files = None
         cache_status = []
 
-        # ── Build cache keys ──
+        # ── Build cache keys and resolve CLIP files ──
         dm_file = pcfg.get("diffusion_model", "")
         ckpt_file = pcfg.get("checkpoint", "")
         model_cache_key = (ckpt_file or dm_file, weight_dtype)
@@ -1053,7 +1058,7 @@ class TheLastModelSwitcher(io.ComfyNode):
             logging.info(f"[TheLastModelSwitcher] Model changed, clearing cache and freeing VRAM")
             _cache_clear()
 
-        # ── Load model (with cache) ──
+        # ── Load MODEL (with cache) ──
         if pcfg.get("checkpoint"):
             cached = _cache_get_model(model_cache_key)
             if cached is not None:
@@ -1154,43 +1159,21 @@ class TheLastModelSwitcher(io.ComfyNode):
                         f"Make sure the VAE file exists in your vae folder."
                     ) from e
 
+        # ── Validate loaded_model ──
         if loaded_model is None:
             raise ValueError(f"Model '{preset_name}' has no model file configured.")
 
-        # ── Encode prompts to CONDITIONING ──
-        positive_cond = None
-        negative_cond = None
-        if clip_obj is not None:
-            # Positive prompt
-            pos_text = positive_prompt if positive_prompt else ""
-            pos_tokens = clip_obj.tokenize(pos_text)
-            positive_cond = clip_obj.encode_from_tokens_scheduled(pos_tokens)
+        # ── Parse sampler settings (steps, cfg, guidance_value) ──
+        sc = pcfg.get("sampler", {})
+        rec_sampler = sc.get("sampler_name", "euler")
+        rec_scheduler = sc.get("scheduler", "normal")
+        out_steps = steps
+        out_cfg = cfg
+        guidance_value = guidance
 
-            # Apply Flux guidance directly to positive conditioning
-            # (replaces the need for a separate FluxGuidance node)
-            if is_flux and guidance_value > 0:
-                positive_cond = node_helpers.conditioning_set_values(
-                    positive_cond, {"guidance": guidance_value})
-
-            # Negative prompt (empty for Flux, user text for SD/SDXL)
-            neg_support = pcfg.get("negative_prompt_supported", not is_flux)
-            neg_text = negative_prompt if (negative_prompt and neg_support) else ""
-            neg_tokens = clip_obj.tokenize(neg_text)
-            negative_cond = clip_obj.encode_from_tokens_scheduled(neg_tokens)
-
-        # ── VAE tiling for high resolutions ──
-        if vae is not None:
-            try:
-                if hasattr(vae, "enable_tiling"):
-                    vae.enable_tiling()
-            except Exception:
-                pass
-
-        # ── Apply megapixel scaling ──
-        # Parse megapixels from DynamicCombo (e.g. "2.0 MP" -> 2.0)
+        # ── Apply megapixel scaling to width/height ──
         selected_mp = 0.0
         if megapixels_str:
-            import re
             mp_match = re.match(r"([\d.]+)", megapixels_str)
             if mp_match:
                 selected_mp = float(mp_match.group(1))
@@ -1208,14 +1191,6 @@ class TheLastModelSwitcher(io.ComfyNode):
 
         target_mp = (width * height) / (1024 * 1024)
 
-        # ── Sampler settings (from input widgets) ──
-        sc = pcfg.get("sampler", {})
-        rec_sampler = sc.get("sampler_name", "euler")
-        rec_scheduler = sc.get("scheduler", "normal")
-        out_steps = steps
-        out_cfg = cfg
-        guidance_value = guidance
-
         # ── Apply ModelSamplingFlux ──
         if is_flux and loaded_model is not None:
             m = loaded_model.clone()
@@ -1232,6 +1207,34 @@ class TheLastModelSwitcher(io.ComfyNode):
             model_sampling.set_parameters(shift=shift)
             m.add_object_patch("model_sampling", model_sampling)
             loaded_model = m
+
+        # ── Encode prompts to CONDITIONING ──
+        positive_cond = None
+        negative_cond = None
+        if clip_obj is not None:
+            # Positive prompt
+            pos_tokens = clip_obj.tokenize(positive_prompt)
+            positive_cond = clip_obj.encode_from_tokens_scheduled(pos_tokens)
+
+            # Apply Flux guidance directly to positive conditioning
+            # (replaces the need for a separate FluxGuidance node)
+            if is_flux and guidance_value > 0:
+                positive_cond = node_helpers.conditioning_set_values(
+                    positive_cond, {"guidance": guidance_value})
+
+            # Negative prompt (empty for Flux, user text for SD/SDXL)
+            neg_support = pcfg.get("negative_prompt_supported", not is_flux)
+            neg_text = negative_prompt if (negative_prompt and neg_support) else ""
+            neg_tokens = clip_obj.tokenize(neg_text)
+            negative_cond = clip_obj.encode_from_tokens_scheduled(neg_tokens)
+
+        # ── Enable VAE tiling ──
+        if vae is not None:
+            try:
+                if hasattr(vae, "enable_tiling"):
+                    vae.enable_tiling()
+            except Exception:
+                pass
 
         # ── Build info text ──
         neg_support = pcfg.get("negative_prompt_supported", not is_flux)
@@ -1296,6 +1299,7 @@ class TheLastModelSwitcher(io.ComfyNode):
             "seed": str(seed),
         }
 
+        # ── Return NodeOutput ──
         return io.NodeOutput(
             loaded_model, vae,
             positive_cond, negative_cond,
