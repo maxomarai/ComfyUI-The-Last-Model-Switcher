@@ -1,7 +1,389 @@
 {
+    "── SD 1.5 ──────────────────": null,
+
+    "SD 1.5": {
+        "description": "Stable Diffusion 1.5 - The classic. Thousands of fine-tunes available.",
+        "checkpoint": "v1-5-pruned-emaonly.safetensors",
+        "clip_type": "stable_diffusion",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (512x512)": [512, 512],
+            "3:2 Photo (768x512)": [768, 512],
+            "2:3 Portrait (512x768)": [512, 768],
+            "16:9 Wide (912x512)": [912, 512],
+            "9:16 Tall (512x912)": [512, 912]
+        },
+        "default_resolution": "1:1 Square (512x512)",
+        "megapixels": 0.26,
+        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 25, "cfg": 7.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler_ancestral/normal, 25 steps, CFG 7.0. Supports negative prompts. Native res 512x512."
+    },
+    "DreamShaper 8 (SD 1.5)": {
+        "description": "DreamShaper 8 - Versatile SD 1.5 fine-tune, great for illustration and realism.",
+        "checkpoint": "dreamshaper_8.safetensors",
+        "clip_type": "stable_diffusion",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (512x512)": [512, 512],
+            "3:2 Photo (768x512)": [768, 512],
+            "2:3 Portrait (512x768)": [512, 768],
+            "16:9 Wide (912x512)": [912, 512],
+            "9:16 Tall (512x912)": [512, 912]
+        },
+        "default_resolution": "1:1 Square (512x512)",
+        "megapixels": 0.26,
+        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 25, "cfg": 7.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler_ancestral/normal, 25 steps, CFG 7.0. Versatile fine-tune for illustration & realism."
+    },
+    "Realistic Vision 6 (SD 1.5)": {
+        "description": "Realistic Vision V6 - Top photorealistic SD 1.5 model.",
+        "checkpoint": "realisticVisionV60B1_v51VAE.safetensors",
+        "clip_type": "stable_diffusion",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (512x512)": [512, 512],
+            "3:2 Photo (768x512)": [768, 512],
+            "2:3 Portrait (512x768)": [512, 768],
+            "16:9 Wide (912x512)": [912, 512],
+            "9:16 Tall (512x912)": [512, 912]
+        },
+        "default_resolution": "3:2 Photo (768x512)",
+        "megapixels": 0.26,
+        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 25, "cfg": 7.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler_ancestral/normal, 25 steps, CFG 7.0. Best photorealism on SD 1.5."
+    },
+
+    "── SDXL ────────────────────": null,
+
+    "SDXL Base 1.0": {
+        "description": "Stable Diffusion XL Base 1.0 - The official SDXL base model.",
+        "checkpoint": "sd_xl_base_1.0.safetensors",
+        "clip_type": "sdxl",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344],
+            "4:3 Standard (1152x896)": [1152, 896],
+            "3:4 Portrait Standard (896x1152)": [896, 1152]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler", "scheduler": "normal", "steps": 25, "cfg": 6.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler/normal, 25 steps, CFG 6.0. Supports negative prompts."
+    },
+    "RealVisXL V5.0 (SDXL)": {
+        "description": "RealVisXL V5.0 - Top photorealistic SDXL fine-tune.",
+        "checkpoint": "realvisxlV50_v50Bakedvae.safetensors",
+        "clip_type": "sdxl",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344],
+            "4:3 Standard (1152x896)": [1152, 896],
+            "3:4 Portrait Standard (896x1152)": [896, 1152]
+        },
+        "default_resolution": "3:2 Photo (1216x832)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 25, "cfg": 5.5 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler_ancestral/normal, 25 steps, CFG 5.5. Best photorealism on SDXL."
+    },
+    "Juggernaut XL (SDXL)": {
+        "description": "Juggernaut XL - Versatile photorealistic SDXL, great all-rounder.",
+        "checkpoint": "juggernautXL_v9Rdphoto2Lightning.safetensors",
+        "clip_type": "sdxl",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344],
+            "4:3 Standard (1152x896)": [1152, 896],
+            "3:4 Portrait Standard (896x1152)": [896, 1152]
+        },
+        "default_resolution": "3:2 Photo (1216x832)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler", "scheduler": "normal", "steps": 25, "cfg": 5.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler/normal, 25 steps, CFG 5.0. Great all-round SDXL model."
+    },
+    "DreamShaper XL (SDXL)": {
+        "description": "DreamShaper XL - Versatile SDXL for illustration, art, and general use.",
+        "checkpoint": "dreamshaperXL_v21TurboDPMSDE.safetensors",
+        "clip_type": "sdxl",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344],
+            "4:3 Standard (1152x896)": [1152, 896],
+            "3:4 Portrait Standard (896x1152)": [896, 1152]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler", "scheduler": "normal", "steps": 25, "cfg": 6.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler/normal, 25 steps, CFG 6.0. Great for illustration and art."
+    },
+    "Pony Diffusion V6 (SDXL)": {
+        "description": "Pony Diffusion V6 XL - Extremely popular for stylized anime/illustration art. Uses Danbooru tags.",
+        "checkpoint": "ponyDiffusionV6XL_v6StartWithThisOne.safetensors",
+        "clip_type": "sdxl",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344],
+            "4:3 Standard (1152x896)": [1152, 896],
+            "3:4 Portrait Standard (896x1152)": [896, 1152]
+        },
+        "default_resolution": "2:3 Portrait (832x1216)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 30, "cfg": 7.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler_ancestral/normal, 30 steps, CFG 7.0. Use Danbooru tags (score_9, score_8_up). Negative prompts important."
+    },
+    "Animagine XL V3.1 (SDXL)": {
+        "description": "Animagine XL V3.1 - High-quality anime SDXL model with Danbooru tagging.",
+        "checkpoint": "animagineXLV31_v31.safetensors",
+        "clip_type": "sdxl",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344],
+            "4:3 Standard (1152x896)": [1152, 896],
+            "3:4 Portrait Standard (896x1152)": [896, 1152]
+        },
+        "default_resolution": "2:3 Portrait (832x1216)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 28, "cfg": 6.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler_ancestral/normal, 28 steps, CFG 6.0. High-quality anime. Supports Danbooru tags."
+    },
+    "Playground v2.5 (SDXL)": {
+        "description": "Playground v2.5 Aesthetic - SDXL-based with excellent aesthetic quality.",
+        "checkpoint": "playground-v2-5-1024px-aesthetic-fp16.safetensors",
+        "clip_type": "sdxl",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344],
+            "4:3 Standard (1152x896)": [1152, 896],
+            "3:4 Portrait Standard (896x1152)": [896, 1152]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 25, "cfg": 3.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler_ancestral/normal, 25 steps, CFG 3.0. Great aesthetics, lower CFG than typical SDXL."
+    },
+    "SDXL Lightning 4-Step (SDXL)": {
+        "description": "SDXL Lightning 4-Step - Distilled SDXL for near-instant generation.",
+        "checkpoint": "sdxl_lightning_4step.safetensors",
+        "clip_type": "sdxl",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler", "scheduler": "sgm_uniform", "steps": 4, "cfg": 1.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": false,
+        "info_text": "Recommended: euler/sgm_uniform, 4 steps, CFG 1.0. Near-instant generation. No negative prompt."
+    },
+    "SDXL Turbo (SDXL)": {
+        "description": "SDXL Turbo - 1-4 step distilled SDXL by Stability AI.",
+        "checkpoint": "sd_xl_turbo_1.0_fp16.safetensors",
+        "clip_type": "sdxl",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (512x512)": [512, 512],
+            "3:2 Photo (768x512)": [768, 512],
+            "2:3 Portrait (512x768)": [512, 768]
+        },
+        "default_resolution": "1:1 Square (512x512)",
+        "megapixels": 0.26,
+        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "sgm_uniform", "steps": 1, "cfg": 1.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": false,
+        "info_text": "Recommended: euler_ancestral/sgm_uniform, 1 step, CFG 1.0. Real-time generation at 512x512."
+    },
+
+    "── SD3 / SD3.5 ────────────": null,
+
+    "SD3.5 Large": {
+        "description": "Stable Diffusion 3.5 Large - 8B param MMDiT with triple CLIP (clip-l + clip-g + T5-XXL).",
+        "diffusion_model": "sd3.5_large.safetensors",
+        "vae": "sd3_vae.safetensors",
+        "clip_type": "sd3",
+        "default_clip": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp16.safetensors"],
+        "compatible_clips": {
+            "clip-l + clip-g + T5 XXL (fp16)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp16.safetensors"],
+            "clip-l + clip-g + T5 XXL (fp8)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+            "clip-l + clip-g (no T5)": ["clip_l.safetensors", "clip_g.safetensors"]
+        },
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344],
+            "4:3 Standard (1152x896)": [1152, 896],
+            "3:4 Portrait Standard (896x1152)": [896, 1152]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 28, "cfg": 4.5 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler/simple, 28 steps, CFG 4.5. Supports negative prompts. Triple CLIP for best quality."
+    },
+    "SD3.5 Large (fp8)": {
+        "description": "Stable Diffusion 3.5 Large fp8 quantized - lower VRAM usage.",
+        "diffusion_model": "sd3.5_large_fp8_scaled.safetensors",
+        "vae": "sd3_vae.safetensors",
+        "clip_type": "sd3",
+        "default_clip": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+        "compatible_clips": {
+            "clip-l + clip-g + T5 XXL (fp8)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+            "clip-l + clip-g + T5 XXL (fp16)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp16.safetensors"],
+            "clip-l + clip-g (no T5)": ["clip_l.safetensors", "clip_g.safetensors"]
+        },
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344],
+            "4:3 Standard (1152x896)": [1152, 896],
+            "3:4 Portrait Standard (896x1152)": [896, 1152]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 28, "cfg": 4.5 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler/simple, 28 steps, CFG 4.5. fp8 quantized - saves ~50% VRAM."
+    },
+    "SD3.5 Large Turbo": {
+        "description": "Stable Diffusion 3.5 Large Turbo - Distilled for 4-8 steps.",
+        "diffusion_model": "sd3.5_large_turbo.safetensors",
+        "vae": "sd3_vae.safetensors",
+        "clip_type": "sd3",
+        "default_clip": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+        "compatible_clips": {
+            "clip-l + clip-g + T5 XXL (fp8)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+            "clip-l + clip-g + T5 XXL (fp16)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp16.safetensors"],
+            "clip-l + clip-g (no T5)": ["clip_l.safetensors", "clip_g.safetensors"]
+        },
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 4, "cfg": 1.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": false,
+        "info_text": "Recommended: euler/simple, 4 steps, CFG 1.0. Distilled for near-instant generation."
+    },
+    "SD3.5 Medium": {
+        "description": "Stable Diffusion 3.5 Medium - 2.5B param, lighter than Large.",
+        "diffusion_model": "sd3.5_medium.safetensors",
+        "vae": "sd3_vae.safetensors",
+        "clip_type": "sd3",
+        "default_clip": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+        "compatible_clips": {
+            "clip-l + clip-g + T5 XXL (fp8)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+            "clip-l + clip-g + T5 XXL (fp16)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp16.safetensors"],
+            "clip-l + clip-g (no T5)": ["clip_l.safetensors", "clip_g.safetensors"]
+        },
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 28, "cfg": 4.5 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Recommended: euler/simple, 28 steps, CFG 4.5. Lighter 2.5B model, good quality/speed balance."
+    },
+
+    "── Flux 1 ──────────────────": null,
+
     "Flux 1 Dev": {
-        "description": "Flux 1 Dev - The original Flux development model with dual CLIP (clip-l + T5-XXL).",
-        "model_type": "diffusion_model",
+        "description": "Flux 1 Dev - The original Flux model with dual CLIP (clip-l + T5-XXL).",
         "diffusion_model": "flux1-dev.safetensors",
         "vae": "ae.safetensors",
         "clip_type": "flux",
@@ -22,20 +404,14 @@
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
         "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. No negative prompt."
     },
     "Flux 1 Dev (GGUF Q5)": {
-        "description": "Flux 1 Dev Q5 GGUF quantized - lower VRAM usage with dual CLIP.",
-        "model_type": "diffusion_model",
+        "description": "Flux 1 Dev Q5 GGUF quantized - lower VRAM usage.",
         "diffusion_model": "flux1-dev-Q5_K_S.gguf",
         "vae": "ae.safetensors",
         "clip_type": "flux",
@@ -56,20 +432,40 @@
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
         "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. GGUF quantized - saves VRAM."
     },
+    "Flux 1 Schnell": {
+        "description": "Flux 1 Schnell - 4-step distilled Flux for fast generation.",
+        "diffusion_model": "flux1-schnell.safetensors",
+        "vae": "ae.safetensors",
+        "clip_type": "flux",
+        "default_clip": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
+        "compatible_clips": {
+            "clip-l + T5 XXL (fp16)": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
+            "clip-l + T5 XXL (fp8)": ["clip_l.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+            "clip-l + T5 XXL (GGUF Q5)": ["clip_l-f16.gguf", "t5-v1_1-xxl-encoder-Q5_K_S.gguf"]
+        },
+        "resolutions": {
+            "1:1 Square (1024x1024)": [1024, 1024],
+            "3:2 Photo (1216x832)": [1216, 832],
+            "2:3 Portrait (832x1216)": [832, 1216],
+            "16:9 Wide (1344x768)": [1344, 768],
+            "9:16 Tall (768x1344)": [768, 1344]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 4, "cfg": 1.0 },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": false,
+        "info_text": "Recommended: euler/simple, 4 steps, CFG 1.0. Fast distilled model - no guidance needed."
+    },
     "Flux 1 Kontext Dev (GGUF)": {
         "description": "Flux 1 Kontext Dev Q5 GGUF - context-aware image editing.",
-        "model_type": "diffusion_model",
         "diffusion_model": "flux1-kontext-dev-Q5_K_S.gguf",
         "vae": "ae.safetensors",
         "clip_type": "flux",
@@ -90,20 +486,17 @@
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
         "guidance": 4.0,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
         "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 4.0. Context-aware editing model."
     },
+
+    "── Flux 2 ──────────────────": null,
+
     "Flux 2 Dev (Mistral)": {
         "description": "Flux 2 Dev fp8 with Mistral 3 Small text encoder - the next-gen Flux.",
-        "model_type": "diffusion_model",
         "diffusion_model": "flux2_dev_fp8mixed.safetensors",
         "vae": "flux2-vae.safetensors",
         "clip_type": "flux2",
@@ -127,20 +520,14 @@
         "megapixels": 1.0,
         "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
         "default_megapixels": "1.0 MP",
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
-        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Uses megapixel-based resolution (1.0 MP). No negative prompt."
+        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Megapixel-based resolution. No negative prompt."
     },
     "Flux 2 Dev (Qwen3 4B)": {
-        "description": "Flux 2 Dev fp8 with Qwen 3 4B text encoder (Klein-compatible).",
-        "model_type": "diffusion_model",
+        "description": "Flux 2 Dev fp8 with Qwen 3 4B text encoder - lower VRAM than Mistral.",
         "diffusion_model": "flux2_dev_fp8mixed.safetensors",
         "vae": "flux2-vae.safetensors",
         "clip_type": "flux2",
@@ -163,20 +550,14 @@
         "megapixels": 1.0,
         "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
         "default_megapixels": "1.0 MP",
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
-        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Qwen3 encoder uses less VRAM than Mistral."
+        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Qwen3 uses less VRAM than Mistral."
     },
     "Flux 2 Dev (full)": {
-        "description": "Flux 2 Dev full precision - best quality, highest VRAM usage (~30 GB).",
-        "model_type": "diffusion_model",
+        "description": "Flux 2 Dev full precision - best quality, needs ~30 GB VRAM.",
         "diffusion_model": "flux2-dev.safetensors",
         "vae": "flux2-vae.safetensors",
         "clip_type": "flux2",
@@ -200,20 +581,14 @@
         "megapixels": 1.0,
         "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
         "default_megapixels": "1.0 MP",
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
-        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Full precision - best quality but needs ~30 GB VRAM."
+        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Full precision - best quality."
     },
     "Flux 2 Klein 4B (fp8)": {
         "description": "Flux 2 Klein 4B distilled - fast, low VRAM (~9 GB).",
-        "model_type": "diffusion_model",
         "diffusion_model": "flux-2-klein-4b-fp8.safetensors",
         "vae": "flux2-vae.safetensors",
         "clip_type": "flux2",
@@ -236,90 +611,14 @@
         "megapixels": 1.0,
         "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
         "default_megapixels": "1.0 MP",
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
-        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Distilled 4B model - fast and low VRAM."
-    },
-    "Flux 2 Klein 4B (full)": {
-        "description": "Flux 2 Klein 4B distilled, full precision.",
-        "model_type": "diffusion_model",
-        "diffusion_model": "flux-2-klein-4b.safetensors",
-        "vae": "flux2-vae.safetensors",
-        "clip_type": "flux2",
-        "default_clip": ["qwen_3_4b_fp8_mixed.safetensors"],
-        "compatible_clips": {
-            "Qwen 3 4B (fp8)": ["qwen_3_4b_fp8_mixed.safetensors"],
-            "Qwen 3 4B (bf16)": ["qwen_3_4b.safetensors"],
-            "Mistral 3 Small (bf16)": ["mistral_3_small_flux2_bf16.safetensors"]
-        },
-        "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
-        },
-        "default_resolution": "1:1 Square (1024x1024)",
-        "megapixels": 1.0,
-        "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
-        "default_megapixels": "1.0 MP",
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
-        "guidance": 3.5,
-        "apply_model_sampling_flux": true,
-        "negative_prompt_supported": false,
-        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Klein 4B full precision."
-    },
-    "Flux 2 Klein 4B Base (fp8)": {
-        "description": "Flux 2 Klein Base 4B fp8 - non-distilled, more detail than Klein distilled.",
-        "model_type": "diffusion_model",
-        "diffusion_model": "flux-2-klein-base-4b-fp8.safetensors",
-        "vae": "flux2-vae.safetensors",
-        "clip_type": "flux2",
-        "default_clip": ["qwen_3_4b_fp8_mixed.safetensors"],
-        "compatible_clips": {
-            "Qwen 3 4B (fp8)": ["qwen_3_4b_fp8_mixed.safetensors"],
-            "Qwen 3 4B (bf16)": ["qwen_3_4b.safetensors"],
-            "Mistral 3 Small (bf16)": ["mistral_3_small_flux2_bf16.safetensors"]
-        },
-        "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344]
-        },
-        "default_resolution": "1:1 Square (1024x1024)",
-        "megapixels": 1.0,
-        "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
-        "default_megapixels": "1.0 MP",
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
-        "guidance": 3.5,
-        "apply_model_sampling_flux": true,
-        "negative_prompt_supported": false,
-        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Non-distilled base - more detail, needs more steps."
+        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Distilled 4B - fast and low VRAM."
     },
     "Flux 2 Klein 9B (full)": {
         "description": "Flux 2 Klein 9B full precision - best Klein quality (~23 GB VRAM).",
-        "model_type": "diffusion_model",
         "diffusion_model": "flux-2-klein-9b.safetensors",
         "vae": "flux2-vae.safetensors",
         "clip_type": "flux2",
@@ -342,78 +641,10 @@
         "megapixels": 1.0,
         "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
         "default_megapixels": "1.0 MP",
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
+        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
-        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Best Klein quality - needs ~23 GB VRAM."
-    },
-    "Flux 2 Klein 9B (GGUF Q8)": {
-        "description": "Flux 2 Klein 9B Q8 GGUF quantized - good quality, lower VRAM.",
-        "model_type": "diffusion_model",
-        "diffusion_model": "flux-2-klein-9b-Q8_0.gguf",
-        "vae": "flux2-vae.safetensors",
-        "clip_type": "flux2",
-        "default_clip": ["qwen_3_4b_fp8_mixed.safetensors"],
-        "compatible_clips": {
-            "Qwen 3 4B (fp8)": ["qwen_3_4b_fp8_mixed.safetensors"],
-            "Qwen 3 4B (bf16)": ["qwen_3_4b.safetensors"],
-            "Mistral 3 Small (bf16)": ["mistral_3_small_flux2_bf16.safetensors"]
-        },
-        "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344]
-        },
-        "default_resolution": "1:1 Square (1024x1024)",
-        "megapixels": 1.0,
-        "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
-        "default_megapixels": "1.0 MP",
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
-        "guidance": 3.5,
-        "apply_model_sampling_flux": true,
-        "negative_prompt_supported": false,
-        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. GGUF Q8 quantized Klein 9B."
-    },
-    "Playground v2.5 (SDXL)": {
-        "description": "Playground v2.5 Aesthetic - SDXL-based checkpoint with great aesthetics.",
-        "model_type": "checkpoint",
-        "checkpoint": "playground-v2-5-1024px-aesthetic-fp16.safetensors",
-        "clip_type": "sdxl",
-        "default_clip": null,
-        "compatible_clips": {},
-        "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
-        },
-        "default_resolution": "1:1 Square (1024x1024)",
-        "megapixels": 1.0,
-        "sampler": {
-            "sampler_name": "euler_ancestral",
-            "scheduler": "normal",
-            "steps": 25,
-            "cfg": 3.0
-        },
-        "guidance": 0.0,
-        "apply_model_sampling_flux": false,
-        "negative_prompt_supported": true,
-        "info_text": "Recommended: euler_ancestral/normal, 25 steps, CFG 3.0. Supports negative prompts. SDXL-based checkpoint."
+        "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Best Klein quality."
     }
 }

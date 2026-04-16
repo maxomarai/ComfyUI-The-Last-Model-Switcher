@@ -33,17 +33,36 @@ No more guessing which text encoder goes with which model.
 
 ## Supported Models
 
-### Flux 2 (with megapixel scaling)
-- Flux 2 Dev (Mistral / Qwen3 4B / full precision)
-- Flux 2 Klein 4B (fp8 / full / base)
-- Flux 2 Klein 9B (full / GGUF Q8)
+### Stable Diffusion 1.5
+- SD 1.5 (base)
+- DreamShaper 8 (versatile illustration/realism)
+- Realistic Vision 6 (photorealistic)
+
+### SDXL
+- SDXL Base 1.0
+- RealVisXL V5.0 (photorealistic)
+- Juggernaut XL (versatile all-rounder)
+- DreamShaper XL (illustration/art)
+- Pony Diffusion V6 (anime/stylized, Danbooru tags)
+- Animagine XL V3.1 (anime)
+- Playground v2.5 (aesthetic)
+- SDXL Lightning 4-Step (near-instant)
+- SDXL Turbo (real-time 1-step)
+
+### SD3 / SD3.5
+- SD3.5 Large (full / fp8)
+- SD3.5 Large Turbo (4-step distilled)
+- SD3.5 Medium
 
 ### Flux 1
 - Flux 1 Dev (full / GGUF Q5)
-- Flux 1 Kontext Dev (GGUF)
+- Flux 1 Schnell (4-step distilled)
+- Flux 1 Kontext Dev (GGUF, context-aware editing)
 
-### SDXL
-- Playground v2.5
+### Flux 2 (with megapixel scaling)
+- Flux 2 Dev (Mistral / Qwen3 4B / full precision)
+- Flux 2 Klein 4B (fp8)
+- Flux 2 Klein 9B (full)
 
 ## Installation
 

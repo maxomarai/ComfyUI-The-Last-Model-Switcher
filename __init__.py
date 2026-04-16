@@ -153,7 +153,7 @@ async def get_presets_api(request):
 async def get_preset_info_api(request):
     preset_name = request.query.get("name", "")
     presets = load_presets()
-    if preset_name not in presets:
+    if preset_name not in presets or presets[preset_name] is None:
         return web.json_response({"error": f"Not found: {preset_name}"}, status=404)
     cfg = presets[preset_name]
     sampler = cfg.get("sampler", {})
@@ -231,6 +231,8 @@ def _build_dynamic_options() -> list[io.DynamicCombo.Option]:
     presets = load_presets()
     options = []
     for name, cfg in presets.items():
+        if cfg is None:
+            continue
         sub_inputs = []
         missing = _validate_preset(name, cfg)
         tag = "  [MISSING]" if missing else ""
