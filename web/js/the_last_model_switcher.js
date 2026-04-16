@@ -294,49 +294,68 @@ app.registerExtension({
         /* Default wider size */
         node.size[0] = Math.max(node.size[0], 380);
 
-        let timer=null;
-        let lastModelName = "";
+        /*
+         * Polling approach: DynamicCombo sub-inputs (resolution, megapixels,
+         * clip_variant) don't reliably trigger onWidgetChanged. Instead we
+         * poll every 500ms and detect changes by comparing current values
+         * to the last seen state. This is lightweight and reliable.
+         */
+        let lastState = { model: "", resolution: "", megapixels: "", clip: "" };
+        let updateTimer = null;
 
+        function getCurrentState(){
+            return {
+                model: getName(node),
+                resolution: getResolution(node),
+                megapixels: getMegapixels(node),
+                clip: (findWidget(node, "clip_variant") || {}).value || "",
+            };
+        }
+
+        function stateChanged(a, b){
+            return a.model !== b.model || a.resolution !== b.resolution
+                || a.megapixels !== b.megapixels || a.clip !== b.clip;
+        }
+
+        async function handleChange(cur, prev){
+            if(!cur.model) return;
+            clearTimeout(updateTimer);
+            updateTimer = setTimeout(async()=>{
+                try{
+                    const i = await fetchInfo(cur.model);
+                    const modelChanged = cur.model !== prev.model;
+
+                    if(modelChanged){
+                        populateAll(node, i, cur.resolution, cur.megapixels);
+                    } else {
+                        updateResolution(node, i, cur.resolution, cur.megapixels);
+                    }
+
+                    showText(node, formatInfo(i));
+                }catch(e){showText(node,"Error: "+e.message)}
+            }, 100);
+        }
+
+        /* Poll for changes */
+        const pollInterval = setInterval(()=>{
+            if(!node.graph) { clearInterval(pollInterval); return; }
+            const cur = getCurrentState();
+            if(stateChanged(cur, lastState)){
+                const prev = {...lastState};
+                lastState = cur;
+                handleChange(cur, prev);
+            }
+        }, 500);
+
+        /* Also keep onWidgetChanged as fallback */
         const ow=node.onWidgetChanged;
         node.onWidgetChanged=function(name,value){
             ow?.apply(this,arguments);
-
-            /*
-             * DynamicCombo fires onWidgetChanged for ANY sub-input change
-             * (model, clip_variant, resolution, megapixels) - often with
-             * just name="model". We detect what actually changed by tracking
-             * the model name: same name = sub-input change (res/mp/clip),
-             * different name = actual model switch.
-             */
-            const isRelevant = name==="model" || name==="model.model"
-                || name==="model.resolution" || name==="resolution"
-                || name==="model.megapixels" || name==="megapixels"
-                || name==="model.clip_variant" || name==="clip_variant";
-
-            if(isRelevant){
-                clearTimeout(timer);
-                timer=setTimeout(async()=>{
-                    const n=getName(node);if(!n)return;
-                    try{
-                        const i=await fetchInfo(n);
-                        const resName = getResolution(node);
-                        const mpStr = getMegapixels(node);
-                        console.log("[TLMS] Widget changed:", name, "| model:", n, "| resolution:", resName, "| megapixels:", mpStr);
-
-                        const actualModelChanged = (n !== lastModelName);
-                        lastModelName = n;
-
-                        if(actualModelChanged){
-                            /* Model changed -> update everything */
-                            populateAll(node, i, resName, mpStr);
-                        } else {
-                            /* Sub-input changed (resolution/megapixels/clip) -> update width/height only */
-                            updateResolution(node, i, resName, mpStr);
-                        }
-
-                        showText(node, formatInfo(i));
-                    }catch(e){showText(node,"Error: "+e.message)}
-                },300);
+            const cur = getCurrentState();
+            if(stateChanged(cur, lastState)){
+                const prev = {...lastState};
+                lastState = cur;
+                handleChange(cur, prev);
             }
         };
 
