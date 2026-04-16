@@ -170,8 +170,53 @@ function pushValuesToConnectedNodes(node, vals){
     app.graph.setDirtyCanvas(true, true);
 }
 
+/* ─── Check connections and build warnings ─── */
+function checkConnections(node, info){
+    const warnings = [];
+    if(!node.outputs) return warnings;
+
+    /*
+     * Output indices:
+     * 0=MODEL, 1=CLIP, 2=VAE, 3=positive, 4=negative,
+     * 5=width, 6=height, 7=steps, 8=cfg, 9=guidance
+     */
+    const hasLinks = (idx) => {
+        const o = node.outputs[idx];
+        return o && o.links && o.links.length > 0;
+    };
+
+    const isFlux = info && info.is_flux;
+    const negSupported = info && info.negative_prompt_supported;
+
+    /* Essential connections */
+    if(!hasLinks(0)) warnings.push("MODEL output is not connected");
+    if(!hasLinks(3)) warnings.push("positive output is not connected - KSampler needs it");
+    if(!hasLinks(4) && !isFlux) warnings.push("negative output is not connected - recommended for this model");
+
+    /* Flux-specific */
+    if(isFlux && !hasLinks(9)) warnings.push("guidance output is not connected - Flux models need it (FluxGuidance node)");
+
+    /* Prompt checks */
+    const posPrompt = node.widgets?.find(w=>w.name==="positive_prompt");
+    const negPrompt = node.widgets?.find(w=>w.name==="negative_prompt");
+
+    if(posPrompt && (!posPrompt.value || posPrompt.value.trim()==="")){
+        warnings.push("Positive prompt is empty");
+    }
+    if(negPrompt && negPrompt.value && negPrompt.value.trim()!=="" && !negSupported){
+        warnings.push("Negative prompt will be ignored (not supported by this model)");
+    }
+
+    /* Resolution */
+    if(!hasLinks(5) && !hasLinks(6)){
+        warnings.push("width/height not connected - connect to EmptyLatentImage");
+    }
+
+    return warnings;
+}
+
 /* ─── Format info as readable text ─── */
-function formatInfo(i){
+function formatInfo(i, warnings){
     const lines=[];
     const sep = "=".repeat(48);
     const sep2 = "~".repeat(48);
@@ -210,6 +255,12 @@ function formatInfo(i){
     if(i.missing_files?.length){
         lines.push("");
         lines.push(`  WARNING: Missing: ${i.missing_files.join(", ")}`);
+    }
+
+    if(warnings && warnings.length){
+        lines.push("");
+        lines.push("  !! WARNINGS !!");
+        warnings.forEach(w => lines.push(`  >> ${w}`));
     }
 
     lines.push("");
@@ -373,7 +424,7 @@ app.registerExtension({
                             updateResolution(node, i, cur.resolution, cur.megapixels);
                         }
 
-                        showText(node, formatInfo(i));
+                        showText(node, formatInfo(i, checkConnections(node, i)));
                         pushCurrentValues();
                     }catch(e){showText(node,"Error: "+e.message)}
                 }, 100);
@@ -383,7 +434,7 @@ app.registerExtension({
             }
         }
 
-        /* Poll for changes */
+        /* Poll for widget value changes */
         const pollInterval = setInterval(()=>{
             if(!node.graph) { clearInterval(pollInterval); return; }
             const cur = getCurrentState();
@@ -393,6 +444,33 @@ app.registerExtension({
                 handleChange(cur, prev);
             }
         }, 500);
+
+        /* Poll for connection changes (less frequent) -> update warnings */
+        let lastConnectionHash = "";
+        const connectionPoll = setInterval(()=>{
+            if(!node.graph) { clearInterval(connectionPoll); return; }
+            /* Build a simple hash of all output connections */
+            let hash = "";
+            if(node.outputs){
+                for(const o of node.outputs){
+                    hash += (o.links ? o.links.length : 0) + ",";
+                }
+            }
+            /* Also include prompt content for prompt warnings */
+            const posW = node.widgets?.find(w=>w.name==="positive_prompt");
+            const negW = node.widgets?.find(w=>w.name==="negative_prompt");
+            hash += "|" + (posW?.value||"").length + "|" + (negW?.value||"").length;
+
+            if(hash !== lastConnectionHash){
+                lastConnectionHash = hash;
+                const n = getName(node);
+                if(n){
+                    fetchInfo(n).then(i=>{
+                        showText(node, formatInfo(i, checkConnections(node, i)));
+                    }).catch(()=>{});
+                }
+            }
+        }, 2000);
 
         /* Also keep onWidgetChanged as fallback */
         const ow=node.onWidgetChanged;
@@ -410,7 +488,7 @@ app.registerExtension({
             const n=getName(node);
             if(!n){showText(node,"No model selected");return}
             showText(node,"Loading...");
-            try{const i=await fetchInfo(n);showText(node,formatInfo(i))}
+            try{const i=await fetchInfo(n);showText(node,formatInfo(i, checkConnections(node, i)))}
             catch(e){showText(node,"Error: "+e.message)}
         },{serialize:false});
 
