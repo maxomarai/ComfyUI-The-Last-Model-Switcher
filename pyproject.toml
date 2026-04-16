@@ -1,0 +1,14 @@
+[project]
+name = "comfyui-the-last-model-switcher"
+description = "One-click model switching for ComfyUI. Auto-configures CLIP, VAE, resolution, prompts, seed, and sampler settings. Supports SD 1.5, SDXL, SD3, Flux 1, Flux 2. AI-powered model identification and prompt enhancement."
+version = "1.0.0"
+license = "MIT"
+requires-python = ">=3.9"
+
+[project.urls]
+Repository = "https://github.com/maxomarai/ComfyUI-The-Last-Model-Switcher"
+
+[tool.comfy]
+PublisherId = "maxomarai"
+DisplayName = "The Last Model Switcher"
+Icon = ""
