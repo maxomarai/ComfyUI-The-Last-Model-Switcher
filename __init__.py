@@ -347,6 +347,7 @@ class TheLastModelSwitcher(io.ComfyNode):
         preset_name = model["model"]
         clip_variant = model.get("clip_variant")
         resolution_name = model.get("resolution")
+        megapixels_str = model.get("megapixels", "")
 
         if preset_name not in presets:
             raise ValueError(f"Model '{preset_name}' not found in presets")
@@ -465,9 +466,26 @@ class TheLastModelSwitcher(io.ComfyNode):
             except Exception:
                 pass
 
-        # ── Resolution (from input widgets, snap to 8) ──
-        width = round(width / 8) * 8
-        height = round(height / 8) * 8
+        # ── Apply megapixel scaling ──
+        # Parse megapixels from DynamicCombo (e.g. "2.0 MP" -> 2.0)
+        selected_mp = 0.0
+        if megapixels_str:
+            import re
+            mp_match = re.match(r"([\d.]+)", megapixels_str)
+            if mp_match:
+                selected_mp = float(mp_match.group(1))
+
+        if selected_mp > 0:
+            # Scale width/height by megapixel target, keeping aspect ratio
+            aspect = width / height if height > 0 else 1.0
+            total = selected_mp * 1024 * 1024
+            h = math.sqrt(total / aspect)
+            width = round((h * aspect) / 8) * 8
+            height = round(h / 8) * 8
+        else:
+            width = round(width / 8) * 8
+            height = round(height / 8) * 8
+
         target_mp = (width * height) / (1024 * 1024)
 
         # ── Sampler settings (from input widgets) ──
