@@ -203,6 +203,168 @@ async def reload_presets_api(request):
 
 
 # ──────────────────────────────────────────────────────────
+#  AI Model Identification (optional, requires Anthropic API key)
+# ──────────────────────────────────────────────────────────
+
+_AI_SETTINGS_KEY = "tlms.anthropic_api_key"
+
+def _get_api_key() -> str:
+    """Get Anthropic API key from ComfyUI settings or environment."""
+    # Try environment variable first
+    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if key:
+        return key
+    # Try ComfyUI settings file
+    try:
+        user_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "user", "default")
+        settings_file = os.path.join(user_dir, "comfy.settings.json")
+        if os.path.exists(settings_file):
+            with open(settings_file, "r") as f:
+                settings = json.load(f)
+                return settings.get(_AI_SETTINGS_KEY, "")
+    except Exception:
+        pass
+    return ""
+
+
+@server.PromptServer.instance.routes.post("/the_last_model_switcher/ai_identify")
+async def ai_identify_api(request):
+    """Use AI to identify a model and suggest optimal settings."""
+    data = await request.json()
+    preset_name = data.get("preset_name", "")
+    api_key = data.get("api_key", "") or _get_api_key()
+
+    if not api_key:
+        return web.json_response({"error": "No Anthropic API key configured. Set it via the node UI or ANTHROPIC_API_KEY env var."}, status=400)
+
+    presets = load_presets()
+    if preset_name not in presets or presets[preset_name] is None:
+        return web.json_response({"error": f"Preset not found: {preset_name}"}, status=404)
+
+    pcfg = presets[preset_name]
+    model_file = pcfg.get("diffusion_model") or pcfg.get("checkpoint", "")
+
+    # Gather model info for the AI
+    filepath = None
+    for folder_key in ("checkpoints", "diffusion_models", "unet"):
+        try:
+            p = folder_paths.get_full_path(folder_key, model_file)
+            if p and os.path.exists(p):
+                filepath = p
+                break
+        except Exception:
+            pass
+
+    file_size_gb = 0
+    sample_keys = []
+    if filepath:
+        file_size_gb = round(os.path.getsize(filepath) / (1024**3), 2)
+        keys = _read_safetensors_keys(filepath)
+        # Send a sample of keys for architecture identification
+        sample_keys = keys[:30] + keys[-10:] if len(keys) > 40 else keys
+
+    prompt = f"""You are an expert on AI image generation models used in ComfyUI. Identify this model and provide EXACT optimal settings.
+
+MODEL INFO:
+- Filename: {model_file}
+- Preset name: {preset_name}
+- File size: {file_size_gb} GB
+- Current detected type: {pcfg.get('clip_type', 'unknown')}
+- Current description: {pcfg.get('description', '')}
+- Sample tensor keys: {json.dumps(sample_keys[:20])}
+- Total tensor count: {len(sample_keys)}
+
+Based on the filename and architecture, identify this model and respond with a JSON object (ONLY JSON, no markdown, no explanation) with these exact fields:
+{{
+    "model_name": "Human-readable name for this model",
+    "description": "One-line description of what this model is and what it's good at",
+    "sampler_name": "recommended sampler (euler, euler_ancestral, dpm_2, dpmpp_2m, dpmpp_sde, uni_pc, etc.)",
+    "scheduler": "recommended scheduler (normal, simple, karras, sgm_uniform, etc.)",
+    "steps": recommended_steps_as_integer,
+    "cfg": recommended_cfg_as_float,
+    "guidance": flux_guidance_as_float_or_0,
+    "negative_prompt_supported": true_or_false,
+    "info_text": "Detailed recommendation text including tips, what this model is best at, prompt style tips, etc.",
+    "confidence": "high/medium/low - how confident you are in this identification"
+}}
+
+Be precise. Use common knowledge about popular models. If the filename matches a known model (e.g. dreamshaperXL, realvisxl, juggernaut, pony, animagine, flux, sd3.5, etc.), use the widely-known optimal settings for that specific model."""
+
+    # Call Anthropic API
+    try:
+        import urllib.request
+        import urllib.error
+
+        req_body = json.dumps({
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 500,
+            "messages": [{"role": "user", "content": prompt}],
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            "https://api.anthropic.com/v1/messages",
+            data=req_body,
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+            },
+        )
+
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp_data = json.loads(resp.read().decode("utf-8"))
+
+        # Extract text from response
+        ai_text = resp_data.get("content", [{}])[0].get("text", "")
+
+        # Parse JSON from response (handle markdown code blocks)
+        ai_text = ai_text.strip()
+        if ai_text.startswith("```"):
+            ai_text = ai_text.split("\n", 1)[1] if "\n" in ai_text else ai_text[3:]
+            if ai_text.endswith("```"):
+                ai_text = ai_text[:-3]
+            ai_text = ai_text.strip()
+
+        ai_result = json.loads(ai_text)
+
+        # Update preset with AI suggestions
+        if ai_result.get("sampler_name"):
+            pcfg["sampler"]["sampler_name"] = ai_result["sampler_name"]
+        if ai_result.get("scheduler"):
+            pcfg["sampler"]["scheduler"] = ai_result["scheduler"]
+        if ai_result.get("steps"):
+            pcfg["sampler"]["steps"] = int(ai_result["steps"])
+        if "cfg" in ai_result:
+            pcfg["sampler"]["cfg"] = float(ai_result["cfg"])
+        if "guidance" in ai_result:
+            pcfg["guidance"] = float(ai_result["guidance"])
+        if "negative_prompt_supported" in ai_result:
+            pcfg["negative_prompt_supported"] = bool(ai_result["negative_prompt_supported"])
+        if ai_result.get("description"):
+            pcfg["description"] = ai_result["description"]
+        if ai_result.get("info_text"):
+            pcfg["info_text"] = ai_result["info_text"]
+
+        # Save updated presets
+        with open(PRESETS_FILE, "w", encoding="utf-8") as f:
+            json.dump(presets, f, indent=4, ensure_ascii=False)
+
+        return web.json_response({
+            "success": True,
+            "ai_result": ai_result,
+            "updated_preset": preset_name,
+        })
+
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8") if e.fp else ""
+        return web.json_response({"error": f"Anthropic API error ({e.code}): {error_body}"}, status=500)
+    except json.JSONDecodeError as e:
+        return web.json_response({"error": f"Could not parse AI response as JSON: {ai_text[:200]}"}, status=500)
+    except Exception as e:
+        return web.json_response({"error": f"AI identification failed: {str(e)}"}, status=500)
+
+
+# ──────────────────────────────────────────────────────────
 #  Model auto-detection (reads safetensors header only)
 # ──────────────────────────────────────────────────────────
 

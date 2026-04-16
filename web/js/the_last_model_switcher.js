@@ -517,6 +517,73 @@ app.registerExtension({
             }catch(e){showText(node,"Error scanning: "+e.message)}
         },{serialize:false});
 
+        node.addWidget("button","AI Identify Model","",async()=>{
+            const n=getName(node);
+            if(!n){showText(node,"No model selected");return}
+
+            /* Get API key: check saved setting, then prompt if needed */
+            let apiKey = "";
+            try{
+                const r = await fetch("/settings/tlms.anthropic_api_key");
+                if(r.ok) apiKey = await r.json();
+            }catch(e){}
+
+            if(!apiKey){
+                apiKey = prompt("Enter your Anthropic API key (stored in ComfyUI settings):\n\nGet one at console.anthropic.com");
+                if(!apiKey) return;
+                /* Save to ComfyUI settings */
+                try{
+                    await fetch("/settings/tlms.anthropic_api_key", {
+                        method:"POST", headers:{"Content-Type":"application/json"},
+                        body: JSON.stringify(apiKey)
+                    });
+                }catch(e){}
+            }
+
+            showText(node,"AI is analyzing this model...");
+            try{
+                const r=await fetch("/the_last_model_switcher/ai_identify",{
+                    method:"POST", headers:{"Content-Type":"application/json"},
+                    body: JSON.stringify({preset_name: n, api_key: apiKey})
+                });
+                const d=await r.json();
+                if(d.error){
+                    showText(node,"AI Error: "+d.error);
+                    return;
+                }
+                const ai = d.ai_result;
+                const lines=[];
+                lines.push("AI IDENTIFICATION COMPLETE");
+                lines.push("=".repeat(48));
+                lines.push("");
+                if(ai.model_name) lines.push(`  Model:      ${ai.model_name}`);
+                if(ai.description) lines.push(`  ${ai.description}`);
+                lines.push("");
+                lines.push("  UPDATED SETTINGS:");
+                if(ai.sampler_name) lines.push(`  Sampler:    ${ai.sampler_name}`);
+                if(ai.scheduler) lines.push(`  Scheduler:  ${ai.scheduler}`);
+                if(ai.steps) lines.push(`  Steps:      ${ai.steps}`);
+                if(ai.cfg !== undefined) lines.push(`  CFG:        ${ai.cfg}`);
+                if(ai.guidance) lines.push(`  Guidance:   ${ai.guidance}`);
+                lines.push(`  Neg prompt: ${ai.negative_prompt_supported ? "yes" : "no"}`);
+                if(ai.confidence) lines.push(`  Confidence: ${ai.confidence}`);
+                if(ai.info_text){
+                    lines.push("");
+                    lines.push(`  ${ai.info_text}`);
+                }
+                lines.push("");
+                lines.push("Settings saved to presets.json.");
+                lines.push("Restart ComfyUI for dropdown changes.");
+                showText(node, lines.join("\n"));
+
+                /* Update current widgets with AI suggestions */
+                if(ai.steps) setWidget(node, "steps", ai.steps);
+                if(ai.cfg !== undefined) setWidget(node, "cfg", ai.cfg);
+                if(ai.guidance !== undefined) setWidget(node, "guidance", ai.guidance);
+                pushCurrentValues();
+            }catch(e){showText(node,"AI Error: "+e.message)}
+        },{serialize:false});
+
         node.addWidget("button","Reload Presets","",async()=>{
             try{
                 const r=await fetch("/the_last_model_switcher/reload");
