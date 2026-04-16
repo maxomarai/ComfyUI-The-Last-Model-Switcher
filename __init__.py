@@ -141,6 +141,19 @@ def _cache_set_vae(key, vae):
     _cache["vae"] = vae
 
 
+def _cache_clear():
+    """Clear all cached models to free memory."""
+    _cache["model_key"] = None
+    _cache["clip_key"] = None
+    _cache["vae_key"] = None
+    _cache["model"] = None
+    _cache["clip"] = None
+    _cache["vae"] = None
+    _cache["clip_files"] = None
+    comfy.model_management.cleanup_models()
+    comfy.model_management.soft_empty_cache()
+
+
 # ──────────────────────────────────────────────────────────
 #  API endpoints
 # ──────────────────────────────────────────────────────────
@@ -379,46 +392,64 @@ class TheLastModelSwitcher(io.ComfyNode):
         vae_file = pcfg.get("vae", "")
         vae_cache_key = vae_file
 
+        # ── Clear cache if model changed (free VRAM) ──
+        if _cache["model_key"] is not None and _cache["model_key"] != model_cache_key:
+            logging.info(f"[TheLastModelSwitcher] Model changed, clearing cache and freeing VRAM")
+            _cache_clear()
+
         # ── Load model (with cache) ──
         if pcfg.get("checkpoint"):
             cached = _cache_get_model(model_cache_key)
             if cached is not None:
                 loaded_model = cached
-                # Checkpoint also provides clip and vae
                 clip_obj = _cache_get_clip(model_cache_key)
                 vae = _cache_get_vae(model_cache_key)
                 clip_files = _cache.get("clip_files")
                 cache_status.append("MODEL/CLIP/VAE from cache")
             else:
-                ckpt_path = folder_paths.get_full_path_or_raise("checkpoints", pcfg["checkpoint"])
-                out = comfy.sd.load_checkpoint_guess_config(
-                    ckpt_path, output_vae=True, output_clip=True, embedding_directory=embedding_dirs)
-                loaded_model, clip_obj, vae = out[:3]
-                _cache_set_model(model_cache_key, loaded_model)
-                _cache_set_clip(model_cache_key, clip_obj, None)
-                _cache_set_vae(model_cache_key, vae)
-                cache_status.append("MODEL/CLIP/VAE loaded from disk")
+                try:
+                    ckpt_path = folder_paths.get_full_path_or_raise("checkpoints", pcfg["checkpoint"])
+                    out = comfy.sd.load_checkpoint_guess_config(
+                        ckpt_path, output_vae=True, output_clip=True, embedding_directory=embedding_dirs)
+                    loaded_model, clip_obj, vae = out[:3]
+                    _cache_set_model(model_cache_key, loaded_model)
+                    _cache_set_clip(model_cache_key, clip_obj, None)
+                    _cache_set_vae(model_cache_key, vae)
+                    cache_status.append("MODEL/CLIP/VAE loaded from disk")
+                except Exception as e:
+                    _cache_clear()
+                    raise RuntimeError(
+                        f"Failed to load checkpoint '{pcfg['checkpoint']}': {e}\n"
+                        f"The file may be corrupted or incomplete. Try re-downloading it."
+                    ) from e
         elif dm_file:
             cached = _cache_get_model(model_cache_key)
             if cached is not None:
                 loaded_model = cached
                 cache_status.append("MODEL from cache")
             else:
-                if _is_gguf(dm_file):
-                    if not _gguf_available:
-                        raise RuntimeError("GGUF required but ComfyUI-GGUF not installed.")
-                    unet_path = folder_paths.get_full_path("unet", dm_file)
-                    if not unet_path:
+                try:
+                    if _is_gguf(dm_file):
+                        if not _gguf_available:
+                            raise RuntimeError("GGUF required but ComfyUI-GGUF not installed.")
+                        unet_path = folder_paths.get_full_path("unet", dm_file)
+                        if not unet_path:
+                            unet_path = folder_paths.get_full_path_or_raise("diffusion_models", dm_file)
+                        loaded_model = _load_diffusion_model_gguf(unet_path)
+                    else:
+                        mo = {}
+                        if weight_dtype == "fp8_e4m3fn": mo["dtype"] = torch.float8_e4m3fn
+                        elif weight_dtype == "fp8_e5m2": mo["dtype"] = torch.float8_e5m2
                         unet_path = folder_paths.get_full_path_or_raise("diffusion_models", dm_file)
-                    loaded_model = _load_diffusion_model_gguf(unet_path)
-                else:
-                    mo = {}
-                    if weight_dtype == "fp8_e4m3fn": mo["dtype"] = torch.float8_e4m3fn
-                    elif weight_dtype == "fp8_e5m2": mo["dtype"] = torch.float8_e5m2
-                    unet_path = folder_paths.get_full_path_or_raise("diffusion_models", dm_file)
-                    loaded_model = comfy.sd.load_diffusion_model(unet_path, model_options=mo)
-                _cache_set_model(model_cache_key, loaded_model)
-                cache_status.append("MODEL loaded from disk")
+                        loaded_model = comfy.sd.load_diffusion_model(unet_path, model_options=mo)
+                    _cache_set_model(model_cache_key, loaded_model)
+                    cache_status.append("MODEL loaded from disk")
+                except Exception as e:
+                    _cache_clear()
+                    raise RuntimeError(
+                        f"Failed to load model '{dm_file}': {e}\n"
+                        f"The file may be corrupted or incomplete. Try re-downloading it."
+                    ) from e
 
         # ── Load CLIP (with cache) ──
         if clip_obj is None and clip_files:
@@ -428,18 +459,24 @@ class TheLastModelSwitcher(io.ComfyNode):
                 clip_files = _cache.get("clip_files") or clip_files
                 cache_status.append("CLIP from cache")
             else:
-                ct_str = pcfg.get("clip_type", "stable_diffusion")
-                ct = getattr(comfy.sd.CLIPType, ct_str.upper(), comfy.sd.CLIPType.STABLE_DIFFUSION)
-                clip_paths = [_resolve_clip_path(f) for f in clip_files]
-                if any(_is_gguf(f) for f in clip_files):
-                    if not _gguf_available:
-                        raise RuntimeError("GGUF CLIP required but ComfyUI-GGUF not installed.")
-                    clip_obj = _load_clip_gguf(clip_paths, ct)
-                else:
-                    clip_obj = comfy.sd.load_clip(ckpt_paths=clip_paths,
-                        embedding_directory=embedding_dirs, clip_type=ct)
-                _cache_set_clip(clip_cache_key, clip_obj, clip_files)
-                cache_status.append("CLIP loaded from disk")
+                try:
+                    ct_str = pcfg.get("clip_type", "stable_diffusion")
+                    ct = getattr(comfy.sd.CLIPType, ct_str.upper(), comfy.sd.CLIPType.STABLE_DIFFUSION)
+                    clip_paths = [_resolve_clip_path(f) for f in clip_files]
+                    if any(_is_gguf(f) for f in clip_files):
+                        if not _gguf_available:
+                            raise RuntimeError("GGUF CLIP required but ComfyUI-GGUF not installed.")
+                        clip_obj = _load_clip_gguf(clip_paths, ct)
+                    else:
+                        clip_obj = comfy.sd.load_clip(ckpt_paths=clip_paths,
+                            embedding_directory=embedding_dirs, clip_type=ct)
+                    _cache_set_clip(clip_cache_key, clip_obj, clip_files)
+                    cache_status.append("CLIP loaded from disk")
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Failed to load CLIP '{', '.join(clip_files)}': {e}\n"
+                        f"Make sure the text encoder files exist in your text_encoders folder."
+                    ) from e
 
         # ── Load VAE (with cache) ──
         if vae is None and vae_file:
@@ -448,12 +485,18 @@ class TheLastModelSwitcher(io.ComfyNode):
                 vae = cached
                 cache_status.append("VAE from cache")
             else:
-                vae_path = folder_paths.get_full_path_or_raise("vae", vae_file)
-                sd, metadata = comfy.utils.load_torch_file(vae_path, return_metadata=True)
-                vae = comfy.sd.VAE(sd=sd, metadata=metadata)
-                vae.throw_exception_if_invalid()
-                _cache_set_vae(vae_cache_key, vae)
-                cache_status.append("VAE loaded from disk")
+                try:
+                    vae_path = folder_paths.get_full_path_or_raise("vae", vae_file)
+                    sd, metadata = comfy.utils.load_torch_file(vae_path, return_metadata=True)
+                    vae = comfy.sd.VAE(sd=sd, metadata=metadata)
+                    vae.throw_exception_if_invalid()
+                    _cache_set_vae(vae_cache_key, vae)
+                    cache_status.append("VAE loaded from disk")
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Failed to load VAE '{vae_file}': {e}\n"
+                        f"Make sure the VAE file exists in your vae folder."
+                    ) from e
 
         if loaded_model is None:
             raise ValueError(f"Model '{preset_name}' has no model file configured.")
