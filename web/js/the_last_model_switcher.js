@@ -16,6 +16,7 @@ const OUTPUT_MAP = {
     7: "steps",
     8: "cfg",
     9: "guidance",
+    10: "seed",
 };
 
 /* ─── Find a widget by name (handles DynamicCombo prefix variants) ─── */
@@ -314,7 +315,7 @@ app.registerExtension({
     async beforeRegisterNodeDef(nodeType, nodeData) {
         if(nodeData.name!=="TheLastModelSwitcher") return;
 
-        const OUTPUT_LABELS = ["MODEL","CLIP","VAE","positive","negative","width","height","steps","cfg","guidance"];
+        const OUTPUT_LABELS = ["MODEL","CLIP","VAE","positive","negative","width","height","steps","cfg","guidance","seed"];
 
         const ox=nodeType.prototype.onExecuted;
         nodeType.prototype.onExecuted=function(msg){
@@ -406,6 +407,7 @@ app.registerExtension({
                 steps: getWidgetVal("steps"),
                 cfg: getWidgetVal("cfg"),
                 guidance: getWidgetVal("guidance"),
+                seed: getWidgetVal("seed"),
             };
         }
 
@@ -416,7 +418,8 @@ app.registerExtension({
 
         function valuesChanged(a, b){
             return a.width !== b.width || a.height !== b.height
-                || a.steps !== b.steps || a.cfg !== b.cfg || a.guidance !== b.guidance;
+                || a.steps !== b.steps || a.cfg !== b.cfg || a.guidance !== b.guidance
+                || a.seed !== b.seed;
         }
 
         function stateChanged(a, b){
@@ -435,6 +438,7 @@ app.registerExtension({
                 steps: String(getVal("steps") || ""),
                 cfg: String(getVal("cfg") || ""),
                 guidance: String(getVal("guidance") || ""),
+                seed: String(getVal("seed") || ""),
             };
             pushValuesToConnectedNodes(node, vals);
         }
@@ -518,6 +522,105 @@ app.registerExtension({
                 handleChange(cur, prev);
             }
         };
+
+        /* ─── AI Enhance Prompt ─── */
+        const enhanceStyles = ["enhance","detailed","concise","creative","fix","custom..."];
+        node.addWidget("combo","enhance_style",enhanceStyles[0],()=>{},{
+            values: enhanceStyles, serialize: false
+        });
+
+        node.addWidget("button","AI Enhance Prompt","",async()=>{
+            const n=getName(node);
+            if(!n){showText(node,"No model selected");return}
+
+            const posW = node.widgets?.find(w=>w.name==="positive_prompt");
+            if(!posW || !posW.value?.trim()){
+                showText(node,"Write a prompt first, then click Enhance.");
+                return;
+            }
+
+            /* Get API key */
+            let apiKey = "";
+            try{
+                const r = await fetch("/settings/tlms.anthropic_api_key");
+                if(r.ok) apiKey = await r.json();
+            }catch(e){}
+            if(!apiKey){
+                apiKey = prompt("Enter your Anthropic API key:");
+                if(!apiKey) return;
+                try{ await fetch("/settings/tlms.anthropic_api_key", {
+                    method:"POST", headers:{"Content-Type":"application/json"},
+                    body: JSON.stringify(apiKey)
+                }); }catch(e){}
+            }
+
+            const styleW = node.widgets?.find(w=>w.name==="enhance_style");
+            let style = styleW?.value || "enhance";
+            let customInstruction = "";
+
+            if(style === "custom..."){
+                customInstruction = prompt("Describe how the AI should enhance your prompt:\n\n(e.g. 'Make it more cinematic', 'Add anime style tags', 'Translate to English and enhance')");
+                if(!customInstruction) return;
+                style = "custom";
+            }
+
+            /* Get model info for context */
+            let clipType = "";
+            try{
+                const info = await fetchInfo(n);
+                clipType = info?.clip_type || "";
+            }catch(e){}
+
+            showText(node,"AI is enhancing your prompt...");
+            try{
+                const r=await fetch("/the_last_model_switcher/enhance_prompt",{
+                    method:"POST", headers:{"Content-Type":"application/json"},
+                    body: JSON.stringify({
+                        prompt: posW.value,
+                        model_name: n,
+                        clip_type: clipType,
+                        style: style,
+                        custom_instruction: customInstruction,
+                        api_key: apiKey,
+                    })
+                });
+                const d=await r.json();
+                if(d.error){ showText(node,"Error: "+d.error); return; }
+
+                /* Show before/after, let user accept or reject */
+                const lines = [];
+                lines.push("AI ENHANCED PROMPT");
+                lines.push("=".repeat(48));
+                lines.push("");
+                lines.push("ORIGINAL:");
+                lines.push(posW.value);
+                lines.push("");
+                lines.push("ENHANCED:");
+                lines.push(d.enhanced);
+                lines.push("");
+                lines.push("Click 'Apply Enhanced Prompt' to use it,");
+                lines.push("or edit it manually in the prompt field.");
+                showText(node, lines.join("\n"));
+
+                /* Store enhanced prompt for apply button */
+                node._pendingEnhanced = d.enhanced;
+            }catch(e){showText(node,"Error: "+e.message)}
+        },{serialize:false});
+
+        node.addWidget("button","Apply Enhanced Prompt","",()=>{
+            if(!node._pendingEnhanced){
+                showText(node,"No enhanced prompt pending. Click 'AI Enhance Prompt' first.");
+                return;
+            }
+            const posW = node.widgets?.find(w=>w.name==="positive_prompt");
+            if(posW){
+                posW.value = node._pendingEnhanced;
+                if(posW.inputEl) posW.inputEl.value = node._pendingEnhanced;
+                posW.callback?.(node._pendingEnhanced);
+            }
+            node._pendingEnhanced = null;
+            showText(node, "Enhanced prompt applied! You can edit it further if needed.");
+        },{serialize:false});
 
         node.addWidget("button","Show Model Info","",async()=>{
             const n=getName(node);

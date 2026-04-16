@@ -369,6 +369,83 @@ Be precise. Use common knowledge about popular models. If the filename matches a
         return web.json_response({"error": f"AI identification failed: {str(e)}"}, status=500)
 
 
+@server.PromptServer.instance.routes.post("/the_last_model_switcher/enhance_prompt")
+async def enhance_prompt_api(request):
+    """Use AI to enhance/rewrite a prompt for the selected model."""
+    data = await request.json()
+    prompt_text = data.get("prompt", "")
+    model_name = data.get("model_name", "")
+    clip_type = data.get("clip_type", "")
+    style = data.get("style", "enhance")
+    custom_instruction = data.get("custom_instruction", "")
+    api_key = data.get("api_key", "") or _get_api_key()
+
+    if not api_key:
+        return web.json_response({"error": "No Anthropic API key configured."}, status=400)
+    if not prompt_text.strip():
+        return web.json_response({"error": "No prompt to enhance."}, status=400)
+
+    # Build style instruction
+    style_instructions = {
+        "enhance": "Enhance and add detail to this prompt while keeping the original intent. Add descriptive details about lighting, composition, style, and quality.",
+        "detailed": "Expand this into a highly detailed, verbose prompt with extensive descriptions of every element - lighting, textures, materials, atmosphere, camera angle, etc.",
+        "concise": "Rewrite this as a concise, efficient prompt. Remove fluff, keep only the most impactful descriptors.",
+        "creative": "Take creative liberties with this prompt. Add unexpected artistic choices, unique style combinations, and creative interpretations while keeping the core subject.",
+        "fix": "Fix and improve this prompt. Correct any issues with prompt structure, remove contradictions, and optimize for best results.",
+    }
+
+    style_text = style_instructions.get(style, style_instructions["enhance"])
+    if custom_instruction:
+        style_text = custom_instruction
+
+    # Model-specific prompt advice
+    model_advice = ""
+    if "pony" in model_name.lower() or "animagine" in model_name.lower():
+        model_advice = "This model uses Danbooru-style tags. Use comma-separated tags like: 1girl, solo, long_hair, blue_eyes, smile, outdoors, masterpiece, best quality. Start with quality tags (score_9, score_8_up, masterpiece)."
+    elif "flux" in clip_type.lower():
+        model_advice = "Flux models work best with natural language descriptions, not tag-based prompts. Write flowing sentences. No need for quality boosters like 'masterpiece' or 'best quality'."
+    elif clip_type in ("sdxl", "stable_diffusion"):
+        model_advice = "This SD/SDXL model works well with both natural language and weighted tags. Quality boosters help: 'masterpiece, best quality, highly detailed'. Use (emphasis:1.2) for weight."
+
+    ai_prompt = f"""You are an expert AI image generation prompt writer. {style_text}
+
+MODEL: {model_name}
+CLIP TYPE: {clip_type}
+{f"MODEL-SPECIFIC ADVICE: {model_advice}" if model_advice else ""}
+
+USER'S ORIGINAL PROMPT:
+{prompt_text}
+
+Write ONLY the enhanced prompt text. No explanations, no quotes, no markdown. Just the prompt ready to paste."""
+
+    try:
+        import urllib.request
+        req_body = json.dumps({
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 500,
+            "messages": [{"role": "user", "content": ai_prompt}],
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            "https://api.anthropic.com/v1/messages",
+            data=req_body,
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+            },
+        )
+
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp_data = json.loads(resp.read().decode("utf-8"))
+
+        enhanced = resp_data.get("content", [{}])[0].get("text", "").strip()
+        return web.json_response({"enhanced": enhanced, "style": style})
+
+    except Exception as e:
+        return web.json_response({"error": f"AI enhance failed: {str(e)}"}, status=500)
+
+
 # ──────────────────────────────────────────────────────────
 #  Model auto-detection (reads safetensors header only)
 # ──────────────────────────────────────────────────────────
@@ -827,6 +904,11 @@ class TheLastModelSwitcher(io.ComfyNode):
                 io.String.Input("negative_prompt", default="", multiline=True,
                     tooltip="Negative prompt. Only used for models that support it (SD, SDXL). Ignored for Flux."),
 
+                # ── Seed ──
+                io.Int.Input("seed", default=0, min=0, max=0xffffffffffffffff,
+                    control_after_generate=True,
+                    tooltip="Random seed. Use the control to randomize, increment, or keep fixed between generations."),
+
                 # ── Value inputs (auto-populated from preset, editable) ──
                 io.Int.Input("width", default=1024, min=64, max=8192, step=8,
                     tooltip="Output width. Auto-set from preset, or type your own value."),
@@ -858,6 +940,8 @@ class TheLastModelSwitcher(io.ComfyNode):
                 io.Float.Output(display_name="cfg"),
                 io.Float.Output(display_name="guidance",
                     tooltip="Flux guidance value (0 = N/A). Connect to FluxGuidance node."),
+                io.Int.Output(display_name="seed",
+                    tooltip="Seed value. Connect to KSampler seed input."),
             ],
         )
 
@@ -866,6 +950,7 @@ class TheLastModelSwitcher(io.ComfyNode):
         cls, model: dict,
         positive_prompt: str = "",
         negative_prompt: str = "",
+        seed: int = 0,
         width: int = 1024,
         height: int = 1024,
         steps: int = 20,
@@ -1154,6 +1239,7 @@ class TheLastModelSwitcher(io.ComfyNode):
             "steps": str(out_steps),
             "cfg": str(out_cfg),
             "guidance": str(guidance_value),
+            "seed": str(seed),
         }
 
         return io.NodeOutput(
@@ -1162,6 +1248,7 @@ class TheLastModelSwitcher(io.ComfyNode):
             width, height,
             out_steps, out_cfg,
             guidance_value,
+            seed,
             ui={
                 "text": ("\n".join(info),),
                 "output_values": (output_values,),
