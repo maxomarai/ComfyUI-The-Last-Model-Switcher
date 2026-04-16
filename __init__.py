@@ -262,9 +262,32 @@ def _detect_model_type(filepath: str) -> dict | None:
     is_hunyuan_video = any("individual_token_refiner" in k for k in keys)
     is_chroma = any("distilled_guidance_layer" in k for k in keys)
 
+    # ── Detect distilled/turbo/lightning variants from filename ──
+    is_turbo = "turbo" in name_lower
+    is_lightning = "lightning" in name_lower
+    is_lcm = "lcm" in name_lower
+    is_distilled = is_turbo or is_lightning or is_lcm or "distill" in name_lower
+
+    # Detect step count from filename (e.g. "4step", "8step")
+    import re
+    step_match = re.search(r"(\d+)\s*step", name_lower)
+    distilled_steps = int(step_match.group(1)) if step_match else (4 if is_turbo or is_lightning else 8 if is_lcm else 0)
+
     # ── SDXL checkpoint (must have 2+ conditioner embedders to exclude SD2) ──
     has_dual_conditioner = any(k.startswith("conditioner.embedders.1.") for k in keys)
     if is_checkpoint and has_conditioner and has_dual_conditioner:
+        # Adjust settings for distilled variants
+        if is_distilled:
+            sampler_cfg = {"sampler_name": "euler", "scheduler": "sgm_uniform",
+                           "steps": distilled_steps or 4, "cfg": 1.0}
+            variant = "Lightning" if is_lightning else "Turbo" if is_turbo else "LCM" if is_lcm else "Distilled"
+            info = f"Auto-detected SDXL {variant}. euler/sgm_uniform, {distilled_steps or 4} steps, CFG 1.0. No negative prompt."
+            neg_support = False
+        else:
+            sampler_cfg = {"sampler_name": "euler", "scheduler": "normal", "steps": 25, "cfg": 6.0}
+            info = "Auto-detected SDXL checkpoint. euler/normal, 25 steps, CFG 6.0."
+            neg_support = True
+
         return {
             "description": f"SDXL checkpoint (auto-detected from {filename})",
             "checkpoint": filename,
@@ -282,11 +305,11 @@ def _detect_model_type(filepath: str) -> dict | None:
             },
             "default_resolution": "1:1 Square (1024x1024)",
             "megapixels": 1.0,
-            "sampler": {"sampler_name": "euler", "scheduler": "normal", "steps": 25, "cfg": 6.0},
+            "sampler": sampler_cfg,
             "guidance": 0.0,
             "apply_model_sampling_flux": False,
-            "negative_prompt_supported": True,
-            "info_text": "Auto-detected SDXL checkpoint. euler/normal, 25 steps, CFG 6.0.",
+            "negative_prompt_supported": neg_support,
+            "info_text": info,
         }
 
     # ── SD 1.5 checkpoint ──
@@ -315,6 +338,16 @@ def _detect_model_type(filepath: str) -> dict | None:
 
     # ── SD3 / SD3.5 diffusion model ──
     if has_joint_blocks:
+        if is_distilled:
+            sd3_sampler = {"sampler_name": "euler", "scheduler": "simple",
+                           "steps": distilled_steps or 4, "cfg": 1.0}
+            sd3_info = f"Auto-detected SD3 Turbo. euler/simple, {distilled_steps or 4} steps, CFG 1.0."
+            sd3_neg = False
+        else:
+            sd3_sampler = {"sampler_name": "euler", "scheduler": "simple", "steps": 28, "cfg": 4.5}
+            sd3_info = "Auto-detected SD3/SD3.5. euler/simple, 28 steps, CFG 4.5."
+            sd3_neg = True
+
         return {
             "description": f"SD3/SD3.5 model (auto-detected from {filename})",
             "diffusion_model": filename,
@@ -335,11 +368,11 @@ def _detect_model_type(filepath: str) -> dict | None:
             },
             "default_resolution": "1:1 Square (1024x1024)",
             "megapixels": 1.0,
-            "sampler": {"sampler_name": "euler", "scheduler": "simple", "steps": 28, "cfg": 4.5},
+            "sampler": sd3_sampler,
             "guidance": 0.0,
             "apply_model_sampling_flux": False,
-            "negative_prompt_supported": True,
-            "info_text": "Auto-detected SD3/SD3.5. euler/simple, 28 steps, CFG 4.5.",
+            "negative_prompt_supported": sd3_neg,
+            "info_text": sd3_info,
         }
 
     # ── Flux architecture ──
