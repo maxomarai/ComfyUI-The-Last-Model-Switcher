@@ -21,8 +21,15 @@ const OUTPUT_MAP = {
 /* ─── Find a widget by name (handles DynamicCombo prefix variants) ─── */
 function findWidget(node, name){
     if(!node.widgets) return null;
+    /* Try exact match first, then prefix variants */
+    const candidates = [name, `model.${name}`, name.replace("model.","")];
     for(const w of node.widgets){
-        if(w.name===name || w.name===`model.${name}` || w.name===name.replace("model.","")) return w;
+        if(candidates.includes(w.name)) return w;
+    }
+    /* Fallback: partial match (widget name ends with the target name) */
+    for(const w of node.widgets){
+        if(w.name && w.name.endsWith(`.${name}`)) return w;
+        if(w.name && w.name.endsWith(name)) return w;
     }
     return null;
 }
@@ -250,17 +257,6 @@ function showText(node, text){
     });
 }
 
-/* ─── Check if name matches model change ─── */
-function isModelChange(name){
-    return name==="model" || name==="model.model";
-}
-function isResolutionChange(name){
-    return name==="resolution" || name==="model.resolution";
-}
-function isMegapixelChange(name){
-    return name==="megapixels" || name==="model.megapixels";
-}
-
 /* ═══ Extension ═══ */
 app.registerExtension({
     name:"Maxomarai.TheLastModelSwitcher",
@@ -296,15 +292,25 @@ app.registerExtension({
         if(node.comfyClass!=="TheLastModelSwitcher" && node.type!=="TheLastModelSwitcher") return;
 
         let timer=null;
+        let lastModelName = "";
+
         const ow=node.onWidgetChanged;
         node.onWidgetChanged=function(name,value){
             ow?.apply(this,arguments);
 
-            const modelChanged = isModelChange(name);
-            const resChanged = isResolutionChange(name);
-            const mpChanged = isMegapixelChange(name);
+            /*
+             * DynamicCombo fires onWidgetChanged for ANY sub-input change
+             * (model, clip_variant, resolution, megapixels) - often with
+             * just name="model". We detect what actually changed by tracking
+             * the model name: same name = sub-input change (res/mp/clip),
+             * different name = actual model switch.
+             */
+            const isRelevant = name==="model" || name==="model.model"
+                || name==="model.resolution" || name==="resolution"
+                || name==="model.megapixels" || name==="megapixels"
+                || name==="model.clip_variant" || name==="clip_variant";
 
-            if(modelChanged || resChanged || mpChanged){
+            if(isRelevant){
                 clearTimeout(timer);
                 timer=setTimeout(async()=>{
                     const n=getName(node);if(!n)return;
@@ -312,12 +318,16 @@ app.registerExtension({
                         const i=await fetchInfo(n);
                         const resName = getResolution(node);
                         const mpStr = getMegapixels(node);
+                        console.log("[TLMS] Widget changed:", name, "| model:", n, "| resolution:", resName, "| megapixels:", mpStr);
 
-                        if(modelChanged){
+                        const actualModelChanged = (n !== lastModelName);
+                        lastModelName = n;
+
+                        if(actualModelChanged){
                             /* Model changed -> update everything */
                             populateAll(node, i, resName, mpStr);
                         } else {
-                            /* Only resolution/megapixels changed -> update width/height only */
+                            /* Sub-input changed (resolution/megapixels/clip) -> update width/height only */
                             updateResolution(node, i, resName, mpStr);
                         }
 
