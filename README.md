@@ -1,145 +1,158 @@
 # The Last Model Switcher
 
-A ComfyUI custom node by **Maxomarai** that makes switching between AI image generation models effortless. Select your model from a dropdown and everything else is configured automatically - compatible CLIP/text encoders, VAE, resolution, and recommended sampler settings.
+A ComfyUI custom node by **Maxomarai** that makes switching between AI image generation models effortless.
 
-No more guessing which text encoder goes with which model.
+Select your model from a dropdown and **everything configures itself** - CLIP, VAE, resolution, prompts, sampler settings, and guidance. Switch from SDXL to Flux without rewiring a single connection.
 
-## Features
+## Quick Start
 
-- **One-click model switching** - Switch between Flux 1, Flux 2, SDXL and more from a single dropdown
-- **Auto CLIP/text encoder selection** - Only compatible text encoders are shown for the selected model
-- **Auto VAE** - The correct VAE is selected automatically
-- **Aspect ratio & resolution presets** - Choose from pre-configured resolutions per model
-- **Megapixel scaling** (Flux 2) - Scale resolution by megapixel target while keeping aspect ratio
-- **Editable outputs** - Steps, CFG, guidance, width, height are editable widgets that auto-populate from presets but can be manually overridden
-- **Live info panel** - Shows recommended sampler, scheduler, and model details directly on the node
-- **Smart model caching** - Models are cached between executions for faster subsequent generations
-- **VAE tiling** - Automatically enabled for memory-efficient high-resolution decode
-- **GGUF support** - Works with GGUF quantized models (requires [ComfyUI-GGUF](https://github.com/city96/ComfyUI-GGUF))
-- **Connected node sync** - Pushes values to connected downstream nodes after execution
-
-## Outputs
-
-| Output | Type | Description |
-|--------|------|-------------|
-| MODEL | MODEL | Loaded model with ModelSamplingFlux applied (for Flux models) |
-| CLIP | CLIP | Compatible text encoder |
-| VAE | VAE | Compatible VAE |
-| width | INT | Resolution width (from preset, megapixel-scaled, or manual) |
-| height | INT | Resolution height |
-| steps | INT | Sampling steps (preset default or your override) |
-| cfg | FLOAT | CFG scale |
-| guidance | FLOAT | Flux guidance value (0 for non-Flux models) |
-
-## Supported Models
-
-### Stable Diffusion 1.5
-- SD 1.5 (base)
-- DreamShaper 8 (versatile illustration/realism)
-- Realistic Vision 6 (photorealistic)
-
-### SDXL
-- SDXL Base 1.0
-- RealVisXL V5.0 (photorealistic)
-- Juggernaut XL (versatile all-rounder)
-- DreamShaper XL (illustration/art)
-- Pony Diffusion V6 (anime/stylized, Danbooru tags)
-- Animagine XL V3.1 (anime)
-- Playground v2.5 (aesthetic)
-- SDXL Lightning 4-Step (near-instant)
-- SDXL Turbo (real-time 1-step)
-
-### SD3 / SD3.5
-- SD3.5 Large (full / fp8)
-- SD3.5 Large Turbo (4-step distilled)
-- SD3.5 Medium
-
-### Flux 1
-- Flux 1 Dev (full / GGUF Q5)
-- Flux 1 Schnell (4-step distilled)
-- Flux 1 Kontext Dev (GGUF, context-aware editing)
-
-### Flux 2 (with megapixel scaling)
-- Flux 2 Dev (Mistral / Qwen3 4B / full precision)
-- Flux 2 Klein 4B (fp8)
-- Flux 2 Klein 9B (full)
-
-## Installation
-
-### Option 1: ComfyUI Manager (Recommended)
-
-Search for "The Last Model Switcher" in ComfyUI Manager and click Install.
-
-### Option 2: Git Clone
+### 1. Install
 
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/maxomarai/ComfyUI-The-Last-Model-Switcher.git the_last_model_switcher
 ```
 
-Restart ComfyUI after installation.
+Restart ComfyUI. The node appears under **loaders > Maxomarai > The Last Model Switcher**.
 
-### Option 3: Manual Download
+### 2. Connect
+
+The node replaces multiple nodes in your workflow. Here's all you need:
+
+```
+The Last Model Switcher              KSampler
+  ┌─────────────────────┐            ┌──────────────┐
+  │ [model dropdown]    │            │              │
+  │ [resolution]        │   MODEL ──>│ model        │
+  │ [megapixels]        │            │              │
+  │ [positive prompt]   │ positive ─>│ positive     │
+  │ [negative prompt]   │ negative ─>│ negative     │
+  │                     │            │              │
+  │ width  [1024]       │     VAE ──>│         LATENT──> VAE Decode
+  │ height [1024]       │            │              │
+  │ steps  [20]         │   width ──>│              │
+  │ cfg    [1.0]        │  height ──>│ EmptyLatent  │
+  │ guidance [3.5]      │   steps ──>│ Image        │
+  │                     │     cfg ──>│              │
+  │ [info panel]        │            └──────────────┘
+  └─────────────────────┘
+```
+
+**That's it.** No separate CLIPTextEncode, no FluxGuidance node, no guessing which VAE or text encoder to use.
+
+### 3. Generate
+
+Write your prompt, hit Queue. Switch models anytime - all settings update automatically.
+
+## What It Does
+
+| When you switch models... | The node automatically... |
+|---------------------------|--------------------------|
+| SDXL to Flux 2 | Changes CLIP, VAE, resolution, disables negative prompt, applies guidance |
+| Flux 2 to SD 1.5 | Switches to 512x512, enables negative prompt, adjusts CFG to 7.0 |
+| Any model change | Updates steps, sampler, scheduler to optimal values for that model |
+| Resolution preset change | Updates width/height (keeps your steps/cfg untouched) |
+| Megapixel change (Flux 2) | Scales width/height while keeping aspect ratio |
+
+## Outputs
+
+| Output | Description |
+|--------|-------------|
+| **MODEL** | Loaded model (with ModelSamplingFlux for Flux) |
+| **CLIP** | Compatible text encoder (for custom encoding workflows) |
+| **VAE** | Compatible VAE |
+| **positive** | Your prompt encoded as conditioning (with FluxGuidance applied for Flux) |
+| **negative** | Negative prompt conditioning (empty for Flux - safe to keep connected) |
+| **width / height** | Resolution from preset, megapixel-scaled, or manually typed |
+| **steps / cfg** | Sampler settings (auto or manual) |
+| **guidance** | Flux guidance value (also applied internally to positive conditioning) |
+
+## Features
+
+### Built-in Prompt Encoding
+Write your positive and negative prompts directly on the node. They're encoded with the correct CLIP for the selected model. For Flux models, FluxGuidance is applied automatically to the positive conditioning.
+
+### Smart Warnings
+The info panel warns you about connection issues in real-time:
+- Missing connections (MODEL, positive, negative not connected)
+- Empty prompt
+- Negative prompt on Flux (will be ignored)
+- Width/height not connected
+
+### Auto Model Scanner
+Click **"Scan for New Models"** to detect models in your folders. The scanner reads safetensors headers (instant, no model loading) and identifies:
+- SD 1.5 / SDXL checkpoints
+- SD3 / SD3.5 models
+- Flux 1 Dev / Schnell
+- Flux 2 models
+- Turbo / Lightning / distilled variants (from filename)
+
+Detected models get correct presets automatically.
+
+### AI Model Identification
+Click **"AI Identify Model"** to use Claude AI for precise model identification. It analyzes the filename, file size, and architecture to suggest optimal settings. Requires an Anthropic API key (prompted on first use, saved in ComfyUI settings).
+
+### Model Caching
+Models are cached between executions. Re-running with the same model skips disk loading entirely. Cache clears automatically when you switch to a different model, freeing VRAM.
+
+### Live Value Sync
+Connected downstream nodes (KSampler, EmptyLatentImage, etc.) update their widgets immediately when you change settings - before execution.
+
+## Supported Models (25 presets)
+
+Only models you have downloaded appear in the dropdown.
+
+| Family | Models |
+|--------|--------|
+| **SD 1.5** | Base, DreamShaper 8, Realistic Vision 6 |
+| **SDXL** | Base, RealVisXL V5.0, Juggernaut XL, DreamShaper XL, Pony V6, Animagine XL, Playground v2.5, Lightning 4-Step, Turbo |
+| **SD3 / SD3.5** | Large, Large fp8, Large Turbo, Medium |
+| **Flux 1** | Dev, Dev GGUF Q5, Schnell, Kontext Dev GGUF |
+| **Flux 2** | Dev (Mistral/Qwen3/full), Klein 4B fp8, Klein 9B |
+
+### Adding Custom Models
+
+**Option A:** Click **"Scan for New Models"** - auto-detects and adds presets.
+
+**Option B:** Click **"AI Identify Model"** - uses AI for precise settings.
+
+**Option C:** Click **"Edit Presets File"** - manually edit `presets.json`.
+
+## Node Buttons
+
+| Button | What it does |
+|--------|-------------|
+| **Show Model Info** | Display current model details and recommended settings |
+| **Scan for New Models** | Auto-detect new models in your folders |
+| **AI Identify Model** | Use Claude AI for precise model identification |
+| **Reload Presets** | Reload presets.json after manual edits |
+| **Edit Presets File** | Show presets.json path (copied to clipboard) |
+
+## Installation
+
+### Git Clone
+
+```bash
+cd ComfyUI/custom_nodes
+git clone https://github.com/maxomarai/ComfyUI-The-Last-Model-Switcher.git the_last_model_switcher
+```
+
+### Manual Download
 
 1. Download this repository as a ZIP
 2. Extract to `ComfyUI/custom_nodes/the_last_model_switcher/`
 3. Restart ComfyUI
 
-## Usage
-
-1. Add the node: **Right-click > Add Node > loaders > Maxomarai > The Last Model Switcher**
-2. Select a model from the dropdown
-3. Compatible CLIP variants and resolutions appear automatically as sub-options
-4. Connect the outputs to your workflow (KSampler, CLIPTextEncode, EmptyLatentImage, etc.)
-5. The info panel at the bottom shows recommended settings
-
-### Customizing Values
-
-- **width / height** - Auto-set from preset + megapixels. Type your own values anytime.
-- **steps / cfg / guidance** - Auto-set when switching models. Changing resolution/megapixels does NOT reset these.
-- **Megapixels** (Flux 2 only) - Select from 0.25 to 4.0 MP. Scales resolution while keeping aspect ratio.
-
-### Adding Your Own Models
-
-Edit `presets.json` in the node directory. Each preset defines:
-
-```json
-{
-    "My Custom Model": {
-        "description": "Description shown in info panel",
-        "diffusion_model": "my_model.safetensors",
-        "vae": "my_vae.safetensors",
-        "clip_type": "flux2",
-        "default_clip": ["my_clip.safetensors"],
-        "compatible_clips": {
-            "Clip Name": ["my_clip.safetensors"]
-        },
-        "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024]
-        },
-        "default_resolution": "1:1 Square (1024x1024)",
-        "megapixels": 1.0,
-        "sampler": {
-            "sampler_name": "euler",
-            "scheduler": "simple",
-            "steps": 20,
-            "cfg": 1.0
-        },
-        "guidance": 3.5,
-        "apply_model_sampling_flux": true,
-        "negative_prompt_supported": false,
-        "info_text": "Your recommended settings info."
-    }
-}
-```
-
-Click "Reload Presets" on the node to pick up changes (restart ComfyUI to update the dropdown).
-
 ## Requirements
 
 - ComfyUI V2 (with `comfy_api.latest` support)
 - [ComfyUI-GGUF](https://github.com/city96/ComfyUI-GGUF) (optional, for GGUF model support)
+- Anthropic API key (optional, for AI model identification)
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+Made by [Maxomarai](https://github.com/maxomarai)
