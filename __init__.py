@@ -207,11 +207,17 @@ async def reload_presets_api(request):
 # ──────────────────────────────────────────────────────────
 
 def _read_safetensors_keys(filepath: str) -> list[str]:
-    """Read tensor key names from safetensors header without loading weights."""
+    """Read tensor key names from safetensors header without loading weights.
+    Uses raw header parsing (no safetensors library needed, instant)."""
     try:
-        import safetensors
-        with safetensors.safe_open(filepath, framework="pt", device="cpu") as f:
-            return list(f.keys())
+        import struct as _struct
+        with open(filepath, "rb") as f:
+            header_len = _struct.unpack("<Q", f.read(8))[0]
+            if header_len > 100_000_000:  # Sanity check: header > 100MB is invalid
+                return []
+            header_json = f.read(header_len).decode("utf-8")
+            header = json.loads(header_json)
+            return [k for k in header.keys() if k != "__metadata__"]
     except Exception:
         return []
 
@@ -241,11 +247,24 @@ def _detect_model_type(filepath: str) -> dict | None:
     has_single_blocks = any(k.startswith("single_blocks.") for k in keys)
     has_input_blocks = any(k.startswith("input_blocks.") or k.startswith("model.diffusion_model.input_blocks.") for k in keys)
 
-    # Flux detection
-    has_guidance_embed = any("guidance" in k and ("in_layer" in k or "embed" in k) for k in keys)
+    # Flux-specific detection (ComfyUI's actual detection logic from model_detection.py)
+    has_img_attn_norm = any("double_blocks.0.img_attn.norm.key_norm." in k for k in keys)
+    has_img_in = any(k == "img_in.weight" or k.endswith(".img_in.weight") for k in keys)
+    is_flux_arch = has_double_blocks and has_single_blocks and has_img_attn_norm and has_img_in
 
-    # ── SDXL checkpoint ──
-    if is_checkpoint and has_conditioner:
+    # Flux 2 vs Flux 1: the definitive differentiator (model_detection.py line 198)
+    has_double_stream_modulation = any("double_stream_modulation_img" in k for k in keys)
+
+    # Flux Dev vs Schnell: guidance layer presence (model_detection.py line 278)
+    has_guidance_embed = any(k.startswith("guidance_in.") or k.endswith(".guidance_in.in_layer.weight") for k in keys)
+
+    # Exclude other architectures that share double_blocks/single_blocks
+    is_hunyuan_video = any("individual_token_refiner" in k for k in keys)
+    is_chroma = any("distilled_guidance_layer" in k for k in keys)
+
+    # ── SDXL checkpoint (must have 2+ conditioner embedders to exclude SD2) ──
+    has_dual_conditioner = any(k.startswith("conditioner.embedders.1.") for k in keys)
+    if is_checkpoint and has_conditioner and has_dual_conditioner:
         return {
             "description": f"SDXL checkpoint (auto-detected from {filename})",
             "checkpoint": filename,
@@ -323,13 +342,11 @@ def _detect_model_type(filepath: str) -> dict | None:
             "info_text": "Auto-detected SD3/SD3.5. euler/simple, 28 steps, CFG 4.5.",
         }
 
-    # ── Flux architecture (has double_blocks + single_blocks) ──
-    if has_double_blocks and has_single_blocks:
-        # Detect Flux 2 vs Flux 1 by checking for Flux2-specific patterns
-        # Flux 2 has different hidden sizes and key patterns
-        is_flux2 = any("txt_attn.norm.key_norm.scale" in k for k in keys)
+    # ── Flux architecture ──
+    # Must be actual Flux (not HunyuanVideo, Chroma, etc. which share double_blocks)
+    if is_flux_arch and not is_hunyuan_video and not is_chroma:
 
-        if is_flux2:
+        if has_double_stream_modulation:
             return {
                 "description": f"Flux 2 model (auto-detected from {filename})",
                 "diffusion_model": filename,
