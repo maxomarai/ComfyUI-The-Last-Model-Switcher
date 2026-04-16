@@ -492,6 +492,31 @@ app.registerExtension({
             catch(e){showText(node,"Error: "+e.message)}
         },{serialize:false});
 
+        node.addWidget("button","Scan for New Models","",async()=>{
+            showText(node,"Scanning model directories...");
+            try{
+                const r=await fetch("/the_last_model_switcher/scan");
+                const d=await r.json();
+                const lines=[];
+                lines.push(`Scan complete! ${d.total_presets} models total.`);
+                if(d.added.length){
+                    lines.push("");
+                    lines.push(`NEW MODELS FOUND (${d.added.length}):`);
+                    d.added.forEach(m=>lines.push(`  + ${m.name} [${m.type}]`));
+                    lines.push("");
+                    lines.push("Restart ComfyUI to see them in the dropdown.");
+                } else {
+                    lines.push("No new models found.");
+                }
+                if(d.skipped.length){
+                    lines.push("");
+                    lines.push(`Could not identify (${d.skipped.length}):`);
+                    d.skipped.forEach(f=>lines.push(`  ? ${f}`));
+                }
+                showText(node, lines.join("\n"));
+            }catch(e){showText(node,"Error scanning: "+e.message)}
+        },{serialize:false});
+
         node.addWidget("button","Reload Presets","",async()=>{
             try{
                 const r=await fetch("/the_last_model_switcher/reload");

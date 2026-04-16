@@ -203,6 +203,293 @@ async def reload_presets_api(request):
 
 
 # ──────────────────────────────────────────────────────────
+#  Model auto-detection (reads safetensors header only)
+# ──────────────────────────────────────────────────────────
+
+def _read_safetensors_keys(filepath: str) -> list[str]:
+    """Read tensor key names from safetensors header without loading weights."""
+    try:
+        import safetensors
+        with safetensors.safe_open(filepath, framework="pt", device="cpu") as f:
+            return list(f.keys())
+    except Exception:
+        return []
+
+
+def _detect_model_type(filepath: str) -> dict | None:
+    """Detect model architecture from safetensors header keys.
+    Returns a preset template dict or None if unknown."""
+
+    if _is_gguf(filepath):
+        return None  # Can't inspect GGUF headers easily
+
+    keys = _read_safetensors_keys(filepath)
+    if not keys:
+        return None
+
+    filename = os.path.basename(filepath)
+    name_lower = filename.lower()
+
+    # ── Check if it's a full checkpoint (has embedded UNet + CLIP) ──
+    is_checkpoint = any(k.startswith("model.diffusion_model.") for k in keys)
+    has_conditioner = any(k.startswith("conditioner.") for k in keys)
+    has_cond_stage = any(k.startswith("cond_stage_model.") for k in keys)
+
+    # ── Check diffusion model architecture ──
+    has_joint_blocks = any(k.startswith("joint_blocks.") for k in keys)
+    has_double_blocks = any(k.startswith("double_blocks.") for k in keys)
+    has_single_blocks = any(k.startswith("single_blocks.") for k in keys)
+    has_input_blocks = any(k.startswith("input_blocks.") or k.startswith("model.diffusion_model.input_blocks.") for k in keys)
+
+    # Flux detection
+    has_guidance_embed = any("guidance" in k and ("in_layer" in k or "embed" in k) for k in keys)
+
+    # ── SDXL checkpoint ──
+    if is_checkpoint and has_conditioner:
+        return {
+            "description": f"SDXL checkpoint (auto-detected from {filename})",
+            "checkpoint": filename,
+            "clip_type": "sdxl",
+            "default_clip": None,
+            "compatible_clips": {},
+            "resolutions": {
+                "1:1 Square (1024x1024)": [1024, 1024],
+                "3:2 Photo (1216x832)": [1216, 832],
+                "2:3 Portrait (832x1216)": [832, 1216],
+                "16:9 Wide (1344x768)": [1344, 768],
+                "9:16 Tall (768x1344)": [768, 1344],
+                "4:3 Standard (1152x896)": [1152, 896],
+                "3:4 Portrait Standard (896x1152)": [896, 1152],
+            },
+            "default_resolution": "1:1 Square (1024x1024)",
+            "megapixels": 1.0,
+            "sampler": {"sampler_name": "euler", "scheduler": "normal", "steps": 25, "cfg": 6.0},
+            "guidance": 0.0,
+            "apply_model_sampling_flux": False,
+            "negative_prompt_supported": True,
+            "info_text": "Auto-detected SDXL checkpoint. euler/normal, 25 steps, CFG 6.0.",
+        }
+
+    # ── SD 1.5 checkpoint ──
+    if is_checkpoint and (has_cond_stage or has_input_blocks):
+        return {
+            "description": f"SD 1.5 checkpoint (auto-detected from {filename})",
+            "checkpoint": filename,
+            "clip_type": "stable_diffusion",
+            "default_clip": None,
+            "compatible_clips": {},
+            "resolutions": {
+                "1:1 Square (512x512)": [512, 512],
+                "3:2 Photo (768x512)": [768, 512],
+                "2:3 Portrait (512x768)": [512, 768],
+                "16:9 Wide (912x512)": [912, 512],
+                "9:16 Tall (512x912)": [512, 912],
+            },
+            "default_resolution": "1:1 Square (512x512)",
+            "megapixels": 0.26,
+            "sampler": {"sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 25, "cfg": 7.0},
+            "guidance": 0.0,
+            "apply_model_sampling_flux": False,
+            "negative_prompt_supported": True,
+            "info_text": "Auto-detected SD 1.5 checkpoint. euler_ancestral/normal, 25 steps, CFG 7.0.",
+        }
+
+    # ── SD3 / SD3.5 diffusion model ──
+    if has_joint_blocks:
+        return {
+            "description": f"SD3/SD3.5 model (auto-detected from {filename})",
+            "diffusion_model": filename,
+            "vae": "sd3_vae.safetensors",
+            "clip_type": "sd3",
+            "default_clip": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+            "compatible_clips": {
+                "clip-l + clip-g + T5 XXL (fp8)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+                "clip-l + clip-g + T5 XXL (fp16)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp16.safetensors"],
+                "clip-l + clip-g (no T5)": ["clip_l.safetensors", "clip_g.safetensors"],
+            },
+            "resolutions": {
+                "1:1 Square (1024x1024)": [1024, 1024],
+                "3:2 Photo (1216x832)": [1216, 832],
+                "2:3 Portrait (832x1216)": [832, 1216],
+                "16:9 Wide (1344x768)": [1344, 768],
+                "9:16 Tall (768x1344)": [768, 1344],
+            },
+            "default_resolution": "1:1 Square (1024x1024)",
+            "megapixels": 1.0,
+            "sampler": {"sampler_name": "euler", "scheduler": "simple", "steps": 28, "cfg": 4.5},
+            "guidance": 0.0,
+            "apply_model_sampling_flux": False,
+            "negative_prompt_supported": True,
+            "info_text": "Auto-detected SD3/SD3.5. euler/simple, 28 steps, CFG 4.5.",
+        }
+
+    # ── Flux architecture (has double_blocks + single_blocks) ──
+    if has_double_blocks and has_single_blocks:
+        # Detect Flux 2 vs Flux 1 by checking for Flux2-specific patterns
+        # Flux 2 has different hidden sizes and key patterns
+        is_flux2 = any("txt_attn.norm.key_norm.scale" in k for k in keys)
+
+        if is_flux2:
+            return {
+                "description": f"Flux 2 model (auto-detected from {filename})",
+                "diffusion_model": filename,
+                "vae": "flux2-vae.safetensors",
+                "clip_type": "flux2",
+                "default_clip": ["qwen_3_4b_fp8_mixed.safetensors"],
+                "compatible_clips": {
+                    "Qwen 3 4B (fp8)": ["qwen_3_4b_fp8_mixed.safetensors"],
+                    "Qwen 3 4B (bf16)": ["qwen_3_4b.safetensors"],
+                    "Mistral 3 Small (bf16)": ["mistral_3_small_flux2_bf16.safetensors"],
+                },
+                "resolutions": {
+                    "1:1 Square (1024x1024)": [1024, 1024],
+                    "3:2 Photo (1216x832)": [1216, 832],
+                    "2:3 Portrait (832x1216)": [832, 1216],
+                    "16:9 Wide (1344x768)": [1344, 768],
+                    "9:16 Tall (768x1344)": [768, 1344],
+                    "4:3 Standard (1152x896)": [1152, 896],
+                    "3:4 Portrait Standard (896x1152)": [896, 1152],
+                },
+                "default_resolution": "1:1 Square (1024x1024)",
+                "megapixels": 1.0,
+                "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
+                "default_megapixels": "1.0 MP",
+                "sampler": {"sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0},
+                "guidance": 3.5,
+                "apply_model_sampling_flux": True,
+                "negative_prompt_supported": False,
+                "info_text": "Auto-detected Flux 2. euler/simple, 20 steps, CFG 1.0, guidance 3.5.",
+            }
+        else:
+            # Flux 1
+            is_schnell = not has_guidance_embed
+            return {
+                "description": f"Flux 1 {'Schnell' if is_schnell else 'Dev'} (auto-detected from {filename})",
+                "diffusion_model": filename,
+                "vae": "ae.safetensors",
+                "clip_type": "flux",
+                "default_clip": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
+                "compatible_clips": {
+                    "clip-l + T5 XXL (fp16)": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
+                    "clip-l + T5 XXL (fp8)": ["clip_l.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+                },
+                "resolutions": {
+                    "1:1 Square (1024x1024)": [1024, 1024],
+                    "3:2 Photo (1216x832)": [1216, 832],
+                    "2:3 Portrait (832x1216)": [832, 1216],
+                    "16:9 Wide (1344x768)": [1344, 768],
+                    "9:16 Tall (768x1344)": [768, 1344],
+                },
+                "default_resolution": "1:1 Square (1024x1024)",
+                "megapixels": 1.0,
+                "sampler": {"sampler_name": "euler", "scheduler": "simple",
+                            "steps": 4 if is_schnell else 20, "cfg": 1.0},
+                "guidance": 0.0 if is_schnell else 3.5,
+                "apply_model_sampling_flux": not is_schnell,
+                "negative_prompt_supported": False,
+                "info_text": f"Auto-detected Flux 1 {'Schnell (4 steps)' if is_schnell else 'Dev (20 steps)'}.",
+            }
+
+    return None
+
+
+def _get_all_model_files() -> list[tuple[str, str, str]]:
+    """Return list of (filename, full_path, folder_type) for all model files."""
+    files = []
+    for folder_key in ("checkpoints", "diffusion_models", "unet"):
+        try:
+            for name in folder_paths.get_filename_list(folder_key):
+                if name.lower().endswith((".safetensors", ".gguf", ".ckpt")):
+                    try:
+                        path = folder_paths.get_full_path(folder_key, name)
+                        if path and os.path.exists(path):
+                            files.append((name, path, folder_key))
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+    return files
+
+
+def _make_preset_name(filename: str, model_type: str) -> str:
+    """Generate a clean preset name from filename."""
+    name = os.path.splitext(filename)[0]
+    # Clean up common suffixes
+    for suffix in ("_fp8", "_fp16", "_bf16", "-fp8", "-fp16", "-bf16",
+                   "_fp8mixed", "_fp8_e4m3fn", "_fp8_scaled",
+                   "_fp8_e4m3fn_scaled", ".fp8", ".fp16"):
+        if name.lower().endswith(suffix):
+            name = name[:len(name) - len(suffix)]
+    # Replace underscores/hyphens with spaces, title case
+    name = name.replace("_", " ").replace("-", " ")
+    # Add type suffix
+    name = f"{name} ({model_type})"
+    return name
+
+
+@server.PromptServer.instance.routes.get("/the_last_model_switcher/scan")
+async def scan_models_api(request):
+    """Scan model directories, detect new models, add to presets."""
+    presets = load_presets()
+    all_files = _get_all_model_files()
+
+    # Find files already in presets
+    known_files = set()
+    for name, cfg in presets.items():
+        if cfg is None:
+            continue
+        if cfg.get("checkpoint"):
+            known_files.add(cfg["checkpoint"])
+        if cfg.get("diffusion_model"):
+            known_files.add(cfg["diffusion_model"])
+
+    added = []
+    skipped = []
+
+    for filename, filepath, folder_key in all_files:
+        if filename in known_files:
+            continue
+
+        detected = _detect_model_type(filepath)
+        if detected is None:
+            skipped.append(filename)
+            continue
+
+        # Generate preset name
+        if detected.get("checkpoint"):
+            model_type = "SDXL" if detected.get("clip_type") == "sdxl" else "SD 1.5"
+        elif "flux2" in detected.get("clip_type", ""):
+            model_type = "Flux 2"
+        elif "flux" in detected.get("clip_type", ""):
+            model_type = "Flux 1"
+        elif "sd3" in detected.get("clip_type", ""):
+            model_type = "SD3"
+        else:
+            model_type = "auto"
+
+        preset_name = _make_preset_name(filename, model_type)
+
+        # Avoid duplicate names
+        if preset_name in presets:
+            preset_name = f"{preset_name} [{filename[:8]}]"
+
+        presets[preset_name] = detected
+        known_files.add(filename)
+        added.append({"name": preset_name, "file": filename, "type": model_type})
+
+    # Save updated presets
+    if added:
+        with open(PRESETS_FILE, "w", encoding="utf-8") as f:
+            json.dump(presets, f, indent=4, ensure_ascii=False)
+
+    return web.json_response({
+        "added": added,
+        "skipped": skipped,
+        "total_presets": len([k for k, v in presets.items() if v is not None]),
+    })
+
+
+# ──────────────────────────────────────────────────────────
 #  Helpers
 # ──────────────────────────────────────────────────────────
 
