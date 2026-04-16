@@ -193,8 +193,7 @@ function checkConnections(node, info){
     if(!hasLinks(3)) warnings.push("positive output is not connected - KSampler needs it");
     if(!hasLinks(4) && !isFlux) warnings.push("negative output is not connected - recommended for this model");
 
-    /* Flux-specific */
-    if(isFlux && !hasLinks(9)) warnings.push("guidance output is not connected - Flux models need it (FluxGuidance node)");
+    /* Note: FluxGuidance is now applied internally to positive conditioning */
 
     /* Prompt checks */
     const posPrompt = node.widgets?.find(w=>w.name==="positive_prompt");
@@ -590,6 +589,27 @@ app.registerExtension({
                 const d=await r.json();
                 showText(node,`Presets reloaded: ${d.count} models\n\n${d.names.join("\n")}\n\n(Restart ComfyUI to update dropdown)`);
             }catch(e){showText(node,"Error reloading: "+e.message)}
+        },{serialize:false});
+
+        node.addWidget("button","Edit Presets File","",async()=>{
+            try{
+                const r=await fetch("/the_last_model_switcher/presets_path");
+                const d=await r.json();
+                const path = d.path;
+                const lines = [];
+                lines.push("PRESETS FILE LOCATION:");
+                lines.push("=".repeat(48));
+                lines.push("");
+                lines.push(path);
+                lines.push("");
+                lines.push("Open this file in a text editor to add/edit");
+                lines.push("model presets manually. After editing, click");
+                lines.push("'Reload Presets' to pick up changes.");
+                lines.push("");
+                lines.push("(Path copied to clipboard)");
+                showText(node, lines.join("\n"));
+                try{ await navigator.clipboard.writeText(path); }catch(e){}
+            }catch(e){showText(node,"Error: "+e.message)}
         },{serialize:false});
     },
 });

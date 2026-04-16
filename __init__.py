@@ -15,6 +15,7 @@ import comfy.utils
 import comfy.model_sampling
 import comfy.model_management
 import folder_paths
+import node_helpers
 import server
 from comfy_api.latest import ComfyExtension, io
 
@@ -200,6 +201,10 @@ async def get_preset_info_api(request):
 async def reload_presets_api(request):
     presets = load_presets()
     return web.json_response({"count": len(presets), "names": list(presets.keys())})
+
+@server.PromptServer.instance.routes.get("/the_last_model_switcher/presets_path")
+async def get_presets_path_api(request):
+    return web.json_response({"path": os.path.abspath(PRESETS_FILE)})
 
 
 # ──────────────────────────────────────────────────────────
@@ -1022,6 +1027,12 @@ class TheLastModelSwitcher(io.ComfyNode):
             pos_tokens = clip_obj.tokenize(pos_text)
             positive_cond = clip_obj.encode_from_tokens_scheduled(pos_tokens)
 
+            # Apply Flux guidance directly to positive conditioning
+            # (replaces the need for a separate FluxGuidance node)
+            if is_flux and guidance_value > 0:
+                positive_cond = node_helpers.conditioning_set_values(
+                    positive_cond, {"guidance": guidance_value})
+
             # Negative prompt (empty for Flux, user text for SD/SDXL)
             neg_support = pcfg.get("negative_prompt_supported", not is_flux)
             neg_text = negative_prompt if (negative_prompt and neg_support) else ""
@@ -1113,6 +1124,7 @@ class TheLastModelSwitcher(io.ComfyNode):
             info.append(f"  Guidance:   {guidance_value}")
         if is_flux:
             info.append(f"  ModelSamplingFlux: applied (shift auto-calculated)")
+            info.append(f"  FluxGuidance: applied to positive conditioning (no extra node needed)")
         if neg_support:
             info.append(f"  Neg prompt: supported (output encoded)")
         else:
