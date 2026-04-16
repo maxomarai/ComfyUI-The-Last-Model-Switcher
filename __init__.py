@@ -233,9 +233,10 @@ def _build_dynamic_options() -> list[io.DynamicCombo.Option]:
     for name, cfg in presets.items():
         if cfg is None:
             continue
-        sub_inputs = []
         missing = _validate_preset(name, cfg)
-        tag = "  [MISSING]" if missing else ""
+        if missing:
+            continue
+        sub_inputs = []
 
         clips = cfg.get("compatible_clips", {})
         if clips:
@@ -263,7 +264,7 @@ def _build_dynamic_options() -> list[io.DynamicCombo.Option]:
                 default=cfg.get("default_megapixels", mp_options[0]),
                 tooltip="Target megapixels. Scales resolution while keeping aspect ratio."))
 
-        options.append(io.DynamicCombo.Option(key=name + tag, inputs=sub_inputs))
+        options.append(io.DynamicCombo.Option(key=name, inputs=sub_inputs))
     return options
 
 
@@ -343,7 +344,7 @@ class TheLastModelSwitcher(io.ComfyNode):
         weight_dtype: str = "default",
     ) -> io.NodeOutput:
         presets = load_presets()
-        preset_name = model["model"].replace("  [MISSING]", "")
+        preset_name = model["model"]
         clip_variant = model.get("clip_variant")
         resolution_name = model.get("resolution")
 
