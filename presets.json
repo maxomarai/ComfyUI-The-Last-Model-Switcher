@@ -1,6 +1,5 @@
 {
     "── SD 1.5 ──────────────────": null,
-
     "SD 1.5": {
         "description": "Stable Diffusion 1.5 - The classic. Thousands of fine-tunes available.",
         "checkpoint": "v1-5-pruned-emaonly.safetensors",
@@ -8,15 +7,35 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (512x512)": [512, 512],
-            "3:2 Photo (768x512)": [768, 512],
-            "2:3 Portrait (512x768)": [512, 768],
-            "16:9 Wide (912x512)": [912, 512],
-            "9:16 Tall (512x912)": [512, 912]
+            "1:1 Square (512x512)": [
+                512,
+                512
+            ],
+            "3:2 Photo (768x512)": [
+                768,
+                512
+            ],
+            "2:3 Portrait (512x768)": [
+                512,
+                768
+            ],
+            "16:9 Wide (912x512)": [
+                912,
+                512
+            ],
+            "9:16 Tall (512x912)": [
+                512,
+                912
+            ]
         },
         "default_resolution": "1:1 Square (512x512)",
         "megapixels": 0.26,
-        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 25, "cfg": 7.0 },
+        "sampler": {
+            "sampler_name": "euler_ancestral",
+            "scheduler": "normal",
+            "steps": 25,
+            "cfg": 7.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
@@ -29,15 +48,35 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (512x512)": [512, 512],
-            "3:2 Photo (768x512)": [768, 512],
-            "2:3 Portrait (512x768)": [512, 768],
-            "16:9 Wide (912x512)": [912, 512],
-            "9:16 Tall (512x912)": [512, 912]
+            "1:1 Square (512x512)": [
+                512,
+                512
+            ],
+            "3:2 Photo (768x512)": [
+                768,
+                512
+            ],
+            "2:3 Portrait (512x768)": [
+                512,
+                768
+            ],
+            "16:9 Wide (912x512)": [
+                912,
+                512
+            ],
+            "9:16 Tall (512x912)": [
+                512,
+                912
+            ]
         },
         "default_resolution": "1:1 Square (512x512)",
         "megapixels": 0.26,
-        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 25, "cfg": 7.0 },
+        "sampler": {
+            "sampler_name": "euler_ancestral",
+            "scheduler": "normal",
+            "steps": 25,
+            "cfg": 7.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
@@ -50,23 +89,41 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (512x512)": [512, 512],
-            "3:2 Photo (768x512)": [768, 512],
-            "2:3 Portrait (512x768)": [512, 768],
-            "16:9 Wide (912x512)": [912, 512],
-            "9:16 Tall (512x912)": [512, 912]
+            "1:1 Square (512x512)": [
+                512,
+                512
+            ],
+            "3:2 Photo (768x512)": [
+                768,
+                512
+            ],
+            "2:3 Portrait (512x768)": [
+                512,
+                768
+            ],
+            "16:9 Wide (912x512)": [
+                912,
+                512
+            ],
+            "9:16 Tall (512x912)": [
+                512,
+                912
+            ]
         },
         "default_resolution": "3:2 Photo (768x512)",
         "megapixels": 0.26,
-        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 25, "cfg": 7.0 },
+        "sampler": {
+            "sampler_name": "euler_ancestral",
+            "scheduler": "normal",
+            "steps": 25,
+            "cfg": 7.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
         "info_text": "Recommended: euler_ancestral/normal, 25 steps, CFG 7.0. Best photorealism on SD 1.5."
     },
-
     "── SDXL ────────────────────": null,
-
     "SDXL Base 1.0": {
         "description": "Stable Diffusion XL Base 1.0 - The official SDXL base model.",
         "checkpoint": "sd_xl_base_1.0.safetensors",
@@ -74,17 +131,43 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "normal", "steps": 25, "cfg": 6.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "normal",
+            "steps": 25,
+            "cfg": 6.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
@@ -97,17 +180,43 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "3:2 Photo (1216x832)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 25, "cfg": 5.5 },
+        "sampler": {
+            "sampler_name": "euler_ancestral",
+            "scheduler": "normal",
+            "steps": 25,
+            "cfg": 5.5
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
@@ -120,17 +229,43 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "3:2 Photo (1216x832)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "normal", "steps": 25, "cfg": 5.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "normal",
+            "steps": 25,
+            "cfg": 5.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
@@ -143,17 +278,43 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "normal", "steps": 25, "cfg": 6.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "normal",
+            "steps": 25,
+            "cfg": 6.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
@@ -166,17 +327,43 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "2:3 Portrait (832x1216)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 30, "cfg": 7.0 },
+        "sampler": {
+            "sampler_name": "euler_ancestral",
+            "scheduler": "normal",
+            "steps": 30,
+            "cfg": 7.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
@@ -189,17 +376,43 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "2:3 Portrait (832x1216)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 28, "cfg": 6.0 },
+        "sampler": {
+            "sampler_name": "euler_ancestral",
+            "scheduler": "normal",
+            "steps": 28,
+            "cfg": 6.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
@@ -212,17 +425,43 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "normal", "steps": 25, "cfg": 3.0 },
+        "sampler": {
+            "sampler_name": "euler_ancestral",
+            "scheduler": "normal",
+            "steps": 25,
+            "cfg": 3.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
@@ -235,15 +474,35 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "sgm_uniform", "steps": 4, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "sgm_uniform",
+            "steps": 4,
+            "cfg": 1.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": false,
@@ -256,44 +515,97 @@
         "default_clip": null,
         "compatible_clips": {},
         "resolutions": {
-            "1:1 Square (512x512)": [512, 512],
-            "3:2 Photo (768x512)": [768, 512],
-            "2:3 Portrait (512x768)": [512, 768]
+            "1:1 Square (512x512)": [
+                512,
+                512
+            ],
+            "3:2 Photo (768x512)": [
+                768,
+                512
+            ],
+            "2:3 Portrait (512x768)": [
+                512,
+                768
+            ]
         },
         "default_resolution": "1:1 Square (512x512)",
         "megapixels": 0.26,
-        "sampler": { "sampler_name": "euler_ancestral", "scheduler": "sgm_uniform", "steps": 1, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler_ancestral",
+            "scheduler": "sgm_uniform",
+            "steps": 1,
+            "cfg": 1.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": false,
         "info_text": "Recommended: euler_ancestral/sgm_uniform, 1 step, CFG 1.0. Real-time generation at 512x512."
     },
-
     "── SD3 / SD3.5 ────────────": null,
-
     "SD3.5 Large": {
         "description": "Stable Diffusion 3.5 Large - 8B param MMDiT with triple CLIP (clip-l + clip-g + T5-XXL).",
         "diffusion_model": "sd3.5_large.safetensors",
         "vae": "sd3_vae.safetensors",
         "clip_type": "sd3",
-        "default_clip": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp16.safetensors"],
+        "default_clip": [
+            "clip_l.safetensors",
+            "clip_g.safetensors",
+            "t5xxl_fp16.safetensors"
+        ],
         "compatible_clips": {
-            "clip-l + clip-g + T5 XXL (fp16)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp16.safetensors"],
-            "clip-l + clip-g + T5 XXL (fp8)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
-            "clip-l + clip-g (no T5)": ["clip_l.safetensors", "clip_g.safetensors"]
+            "clip-l + clip-g + T5 XXL (fp16)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors",
+                "t5xxl_fp16.safetensors"
+            ],
+            "clip-l + clip-g + T5 XXL (fp8)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors",
+                "t5xxl_fp8_e4m3fn_scaled.safetensors"
+            ],
+            "clip-l + clip-g (no T5)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 28, "cfg": 4.5 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 28,
+            "cfg": 4.5
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
@@ -304,24 +616,65 @@
         "diffusion_model": "sd3.5_large_fp8_scaled.safetensors",
         "vae": "sd3_vae.safetensors",
         "clip_type": "sd3",
-        "default_clip": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+        "default_clip": [
+            "clip_l.safetensors",
+            "clip_g.safetensors",
+            "t5xxl_fp8_e4m3fn_scaled.safetensors"
+        ],
         "compatible_clips": {
-            "clip-l + clip-g + T5 XXL (fp8)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
-            "clip-l + clip-g + T5 XXL (fp16)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp16.safetensors"],
-            "clip-l + clip-g (no T5)": ["clip_l.safetensors", "clip_g.safetensors"]
+            "clip-l + clip-g + T5 XXL (fp8)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors",
+                "t5xxl_fp8_e4m3fn_scaled.safetensors"
+            ],
+            "clip-l + clip-g + T5 XXL (fp16)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors",
+                "t5xxl_fp16.safetensors"
+            ],
+            "clip-l + clip-g (no T5)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 28, "cfg": 4.5 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 28,
+            "cfg": 4.5
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
@@ -332,22 +685,57 @@
         "diffusion_model": "sd3.5_large_turbo.safetensors",
         "vae": "sd3_vae.safetensors",
         "clip_type": "sd3",
-        "default_clip": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+        "default_clip": [
+            "clip_l.safetensors",
+            "clip_g.safetensors",
+            "t5xxl_fp8_e4m3fn_scaled.safetensors"
+        ],
         "compatible_clips": {
-            "clip-l + clip-g + T5 XXL (fp8)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
-            "clip-l + clip-g + T5 XXL (fp16)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp16.safetensors"],
-            "clip-l + clip-g (no T5)": ["clip_l.safetensors", "clip_g.safetensors"]
+            "clip-l + clip-g + T5 XXL (fp8)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors",
+                "t5xxl_fp8_e4m3fn_scaled.safetensors"
+            ],
+            "clip-l + clip-g + T5 XXL (fp16)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors",
+                "t5xxl_fp16.safetensors"
+            ],
+            "clip-l + clip-g (no T5)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 4, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 4,
+            "cfg": 1.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": false,
@@ -358,53 +746,124 @@
         "diffusion_model": "sd3.5_medium.safetensors",
         "vae": "sd3_vae.safetensors",
         "clip_type": "sd3",
-        "default_clip": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
+        "default_clip": [
+            "clip_l.safetensors",
+            "clip_g.safetensors",
+            "t5xxl_fp8_e4m3fn_scaled.safetensors"
+        ],
         "compatible_clips": {
-            "clip-l + clip-g + T5 XXL (fp8)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
-            "clip-l + clip-g + T5 XXL (fp16)": ["clip_l.safetensors", "clip_g.safetensors", "t5xxl_fp16.safetensors"],
-            "clip-l + clip-g (no T5)": ["clip_l.safetensors", "clip_g.safetensors"]
+            "clip-l + clip-g + T5 XXL (fp8)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors",
+                "t5xxl_fp8_e4m3fn_scaled.safetensors"
+            ],
+            "clip-l + clip-g + T5 XXL (fp16)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors",
+                "t5xxl_fp16.safetensors"
+            ],
+            "clip-l + clip-g (no T5)": [
+                "clip_l.safetensors",
+                "clip_g.safetensors"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 28, "cfg": 4.5 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 28,
+            "cfg": 4.5
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": true,
         "info_text": "Recommended: euler/simple, 28 steps, CFG 4.5. Lighter 2.5B model, good quality/speed balance."
     },
-
     "── Flux 1 ──────────────────": null,
-
     "Flux 1 Dev": {
         "description": "Flux 1 Dev - The original Flux model with dual CLIP (clip-l + T5-XXL).",
         "diffusion_model": "flux1-dev.safetensors",
         "vae": "ae.safetensors",
         "clip_type": "flux",
-        "default_clip": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
+        "default_clip": [
+            "clip_l.safetensors",
+            "t5xxl_fp16.safetensors"
+        ],
         "compatible_clips": {
-            "clip-l + T5 XXL (fp16)": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
-            "clip-l + T5 XXL (fp8)": ["clip_l.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
-            "clip-l + T5 XXL (GGUF Q5)": ["clip_l-f16.gguf", "t5-v1_1-xxl-encoder-Q5_K_S.gguf"]
+            "clip-l + T5 XXL (fp16)": [
+                "clip_l.safetensors",
+                "t5xxl_fp16.safetensors"
+            ],
+            "clip-l + T5 XXL (fp8)": [
+                "clip_l.safetensors",
+                "t5xxl_fp8_e4m3fn_scaled.safetensors"
+            ],
+            "clip-l + T5 XXL (GGUF Q5)": [
+                "clip_l-f16.gguf",
+                "t5-v1_1-xxl-encoder-Q5_K_S.gguf"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 20,
+            "cfg": 1.0
+        },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
@@ -415,24 +874,62 @@
         "diffusion_model": "flux1-dev-Q5_K_S.gguf",
         "vae": "ae.safetensors",
         "clip_type": "flux",
-        "default_clip": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
+        "default_clip": [
+            "clip_l.safetensors",
+            "t5xxl_fp16.safetensors"
+        ],
         "compatible_clips": {
-            "clip-l + T5 XXL (fp16)": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
-            "clip-l + T5 XXL (fp8)": ["clip_l.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
-            "clip-l + T5 XXL (GGUF Q5)": ["clip_l-f16.gguf", "t5-v1_1-xxl-encoder-Q5_K_S.gguf"]
+            "clip-l + T5 XXL (fp16)": [
+                "clip_l.safetensors",
+                "t5xxl_fp16.safetensors"
+            ],
+            "clip-l + T5 XXL (fp8)": [
+                "clip_l.safetensors",
+                "t5xxl_fp8_e4m3fn_scaled.safetensors"
+            ],
+            "clip-l + T5 XXL (GGUF Q5)": [
+                "clip_l-f16.gguf",
+                "t5-v1_1-xxl-encoder-Q5_K_S.gguf"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 20,
+            "cfg": 1.0
+        },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
@@ -443,22 +940,54 @@
         "diffusion_model": "flux1-schnell.safetensors",
         "vae": "ae.safetensors",
         "clip_type": "flux",
-        "default_clip": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
+        "default_clip": [
+            "clip_l.safetensors",
+            "t5xxl_fp16.safetensors"
+        ],
         "compatible_clips": {
-            "clip-l + T5 XXL (fp16)": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
-            "clip-l + T5 XXL (fp8)": ["clip_l.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
-            "clip-l + T5 XXL (GGUF Q5)": ["clip_l-f16.gguf", "t5-v1_1-xxl-encoder-Q5_K_S.gguf"]
+            "clip-l + T5 XXL (fp16)": [
+                "clip_l.safetensors",
+                "t5xxl_fp16.safetensors"
+            ],
+            "clip-l + T5 XXL (fp8)": [
+                "clip_l.safetensors",
+                "t5xxl_fp8_e4m3fn_scaled.safetensors"
+            ],
+            "clip-l + T5 XXL (GGUF Q5)": [
+                "clip_l-f16.gguf",
+                "t5-v1_1-xxl-encoder-Q5_K_S.gguf"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 4, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 4,
+            "cfg": 1.0
+        },
         "guidance": 0.0,
         "apply_model_sampling_flux": false,
         "negative_prompt_supported": false,
@@ -469,58 +998,138 @@
         "diffusion_model": "flux1-kontext-dev-Q5_K_S.gguf",
         "vae": "ae.safetensors",
         "clip_type": "flux",
-        "default_clip": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
+        "default_clip": [
+            "clip_l.safetensors",
+            "t5xxl_fp16.safetensors"
+        ],
         "compatible_clips": {
-            "clip-l + T5 XXL (fp16)": ["clip_l.safetensors", "t5xxl_fp16.safetensors"],
-            "clip-l + T5 XXL (fp8)": ["clip_l.safetensors", "t5xxl_fp8_e4m3fn_scaled.safetensors"],
-            "clip-l + T5 XXL (GGUF Q5)": ["clip_l-f16.gguf", "t5-v1_1-xxl-encoder-Q5_K_S.gguf"]
+            "clip-l + T5 XXL (fp16)": [
+                "clip_l.safetensors",
+                "t5xxl_fp16.safetensors"
+            ],
+            "clip-l + T5 XXL (fp8)": [
+                "clip_l.safetensors",
+                "t5xxl_fp8_e4m3fn_scaled.safetensors"
+            ],
+            "clip-l + T5 XXL (GGUF Q5)": [
+                "clip_l-f16.gguf",
+                "t5-v1_1-xxl-encoder-Q5_K_S.gguf"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 20,
+            "cfg": 1.0
+        },
         "guidance": 4.0,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
         "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 4.0. Context-aware editing model."
     },
-
     "── Flux 2 ──────────────────": null,
-
     "Flux 2 Dev (Mistral)": {
         "description": "Flux 2 Dev fp8 with Mistral 3 Small text encoder - the next-gen Flux.",
         "diffusion_model": "flux2_dev_fp8mixed.safetensors",
         "vae": "flux2-vae.safetensors",
         "clip_type": "flux2",
-        "default_clip": ["mistral_3_small_flux2_bf16.safetensors"],
+        "default_clip": [
+            "mistral_3_small_flux2_bf16.safetensors"
+        ],
         "compatible_clips": {
-            "Mistral 3 Small (bf16)": ["mistral_3_small_flux2_bf16.safetensors"],
-            "Qwen 3 4B (fp8)": ["qwen_3_4b_fp8_mixed.safetensors"],
-            "Qwen 3 4B (bf16)": ["qwen_3_4b.safetensors"]
+            "Mistral 3 Small (bf16)": [
+                "mistral_3_small_flux2_bf16.safetensors"
+            ],
+            "Qwen 3 4B (fp8)": [
+                "qwen_3_4b_fp8_mixed.safetensors"
+            ],
+            "Qwen 3 4B (bf16)": [
+                "qwen_3_4b.safetensors"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152],
-            "21:9 Ultrawide (1536x640)": [1536, 640]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ],
+            "21:9 Ultrawide (1536x640)": [
+                1536,
+                640
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
+        "supported_megapixels": [
+            "0.25 MP",
+            "0.5 MP",
+            "1.0 MP",
+            "1.5 MP",
+            "2.0 MP",
+            "4.0 MP"
+        ],
         "default_megapixels": "1.0 MP",
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 20,
+            "cfg": 1.0
+        },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
@@ -531,26 +1140,67 @@
         "diffusion_model": "flux2_dev_fp8mixed.safetensors",
         "vae": "flux2-vae.safetensors",
         "clip_type": "flux2",
-        "default_clip": ["qwen_3_4b_fp8_mixed.safetensors"],
+        "default_clip": [
+            "qwen_3_4b_fp8_mixed.safetensors"
+        ],
         "compatible_clips": {
-            "Qwen 3 4B (fp8)": ["qwen_3_4b_fp8_mixed.safetensors"],
-            "Qwen 3 4B (bf16)": ["qwen_3_4b.safetensors"],
-            "Mistral 3 Small (bf16)": ["mistral_3_small_flux2_bf16.safetensors"]
+            "Qwen 3 4B (fp8)": [
+                "qwen_3_4b_fp8_mixed.safetensors"
+            ],
+            "Qwen 3 4B (bf16)": [
+                "qwen_3_4b.safetensors"
+            ],
+            "Mistral 3 Small (bf16)": [
+                "mistral_3_small_flux2_bf16.safetensors"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
+        "supported_megapixels": [
+            "0.25 MP",
+            "0.5 MP",
+            "1.0 MP",
+            "1.5 MP",
+            "2.0 MP",
+            "4.0 MP"
+        ],
         "default_megapixels": "1.0 MP",
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 20,
+            "cfg": 1.0
+        },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
@@ -561,27 +1211,71 @@
         "diffusion_model": "flux2-dev.safetensors",
         "vae": "flux2-vae.safetensors",
         "clip_type": "flux2",
-        "default_clip": ["mistral_3_small_flux2_bf16.safetensors"],
+        "default_clip": [
+            "mistral_3_small_flux2_bf16.safetensors"
+        ],
         "compatible_clips": {
-            "Mistral 3 Small (bf16)": ["mistral_3_small_flux2_bf16.safetensors"],
-            "Qwen 3 4B (fp8)": ["qwen_3_4b_fp8_mixed.safetensors"],
-            "Qwen 3 4B (bf16)": ["qwen_3_4b.safetensors"]
+            "Mistral 3 Small (bf16)": [
+                "mistral_3_small_flux2_bf16.safetensors"
+            ],
+            "Qwen 3 4B (fp8)": [
+                "qwen_3_4b_fp8_mixed.safetensors"
+            ],
+            "Qwen 3 4B (bf16)": [
+                "qwen_3_4b.safetensors"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152],
-            "21:9 Ultrawide (1536x640)": [1536, 640]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ],
+            "21:9 Ultrawide (1536x640)": [
+                1536,
+                640
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
+        "supported_megapixels": [
+            "0.25 MP",
+            "0.5 MP",
+            "1.0 MP",
+            "1.5 MP",
+            "2.0 MP",
+            "4.0 MP"
+        ],
         "default_megapixels": "1.0 MP",
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 20,
+            "cfg": 1.0
+        },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
@@ -592,26 +1286,67 @@
         "diffusion_model": "flux-2-klein-4b-fp8.safetensors",
         "vae": "flux2-vae.safetensors",
         "clip_type": "flux2",
-        "default_clip": ["qwen_3_4b_fp8_mixed.safetensors"],
+        "default_clip": [
+            "qwen_3_4b_fp8_mixed.safetensors"
+        ],
         "compatible_clips": {
-            "Qwen 3 4B (fp8)": ["qwen_3_4b_fp8_mixed.safetensors"],
-            "Qwen 3 4B (bf16)": ["qwen_3_4b.safetensors"],
-            "Mistral 3 Small (bf16)": ["mistral_3_small_flux2_bf16.safetensors"]
+            "Qwen 3 4B (fp8)": [
+                "qwen_3_4b_fp8_mixed.safetensors"
+            ],
+            "Qwen 3 4B (bf16)": [
+                "qwen_3_4b.safetensors"
+            ],
+            "Mistral 3 Small (bf16)": [
+                "mistral_3_small_flux2_bf16.safetensors"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
+        "supported_megapixels": [
+            "0.25 MP",
+            "0.5 MP",
+            "1.0 MP",
+            "1.5 MP",
+            "2.0 MP",
+            "4.0 MP"
+        ],
         "default_megapixels": "1.0 MP",
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 20,
+            "cfg": 1.0
+        },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
@@ -622,29 +1357,310 @@
         "diffusion_model": "flux-2-klein-9b.safetensors",
         "vae": "flux2-vae.safetensors",
         "clip_type": "flux2",
-        "default_clip": ["qwen_3_4b_fp8_mixed.safetensors"],
+        "default_clip": [
+            "qwen_3_4b_fp8_mixed.safetensors"
+        ],
         "compatible_clips": {
-            "Qwen 3 4B (fp8)": ["qwen_3_4b_fp8_mixed.safetensors"],
-            "Qwen 3 4B (bf16)": ["qwen_3_4b.safetensors"],
-            "Mistral 3 Small (bf16)": ["mistral_3_small_flux2_bf16.safetensors"]
+            "Qwen 3 4B (fp8)": [
+                "qwen_3_4b_fp8_mixed.safetensors"
+            ],
+            "Qwen 3 4B (bf16)": [
+                "qwen_3_4b.safetensors"
+            ],
+            "Mistral 3 Small (bf16)": [
+                "mistral_3_small_flux2_bf16.safetensors"
+            ]
         },
         "resolutions": {
-            "1:1 Square (1024x1024)": [1024, 1024],
-            "3:2 Photo (1216x832)": [1216, 832],
-            "2:3 Portrait (832x1216)": [832, 1216],
-            "16:9 Wide (1344x768)": [1344, 768],
-            "9:16 Tall (768x1344)": [768, 1344],
-            "4:3 Standard (1152x896)": [1152, 896],
-            "3:4 Portrait Standard (896x1152)": [896, 1152]
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
         },
         "default_resolution": "1:1 Square (1024x1024)",
         "megapixels": 1.0,
-        "supported_megapixels": ["0.25 MP", "0.5 MP", "1.0 MP", "1.5 MP", "2.0 MP", "4.0 MP"],
+        "supported_megapixels": [
+            "0.25 MP",
+            "0.5 MP",
+            "1.0 MP",
+            "1.5 MP",
+            "2.0 MP",
+            "4.0 MP"
+        ],
         "default_megapixels": "1.0 MP",
-        "sampler": { "sampler_name": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0 },
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 20,
+            "cfg": 1.0
+        },
         "guidance": 3.5,
         "apply_model_sampling_flux": true,
         "negative_prompt_supported": false,
         "info_text": "Recommended: euler/simple, 20 steps, CFG 1.0, guidance 3.5. Best Klein quality."
+    },
+    "playground v2.5 1024px aesthetic (SDXL)": {
+        "description": "SDXL checkpoint (auto-detected from playground-v2.5-1024px-aesthetic.fp16.safetensors)",
+        "checkpoint": "playground-v2.5-1024px-aesthetic.fp16.safetensors",
+        "clip_type": "sdxl",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "normal",
+            "steps": 25,
+            "cfg": 6.0
+        },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Auto-detected SDXL checkpoint. euler/normal, 25 steps, CFG 6.0."
+    },
+    "playground v2.5 1024px aesthetic (SDXL) [playgrou]": {
+        "description": "SDXL checkpoint (auto-detected from playground-v2.5-1024px-aesthetic.safetensors)",
+        "checkpoint": "playground-v2.5-1024px-aesthetic.safetensors",
+        "clip_type": "sdxl",
+        "default_clip": null,
+        "compatible_clips": {},
+        "resolutions": {
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "normal",
+            "steps": 25,
+            "cfg": 6.0
+        },
+        "guidance": 0.0,
+        "apply_model_sampling_flux": false,
+        "negative_prompt_supported": true,
+        "info_text": "Auto-detected SDXL checkpoint. euler/normal, 25 steps, CFG 6.0."
+    },
+    "flux 2 klein 4b (Flux 2)": {
+        "description": "Flux 2 model (auto-detected from flux-2-klein-4b.safetensors)",
+        "diffusion_model": "flux-2-klein-4b.safetensors",
+        "vae": "flux2-vae.safetensors",
+        "clip_type": "flux2",
+        "default_clip": [
+            "qwen_3_4b_fp8_mixed.safetensors"
+        ],
+        "compatible_clips": {
+            "Qwen 3 4B (fp8)": [
+                "qwen_3_4b_fp8_mixed.safetensors"
+            ],
+            "Qwen 3 4B (bf16)": [
+                "qwen_3_4b.safetensors"
+            ],
+            "Mistral 3 Small (bf16)": [
+                "mistral_3_small_flux2_bf16.safetensors"
+            ]
+        },
+        "resolutions": {
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "supported_megapixels": [
+            "0.25 MP",
+            "0.5 MP",
+            "1.0 MP",
+            "1.5 MP",
+            "2.0 MP",
+            "4.0 MP"
+        ],
+        "default_megapixels": "1.0 MP",
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 20,
+            "cfg": 1.0
+        },
+        "guidance": 3.5,
+        "apply_model_sampling_flux": true,
+        "negative_prompt_supported": false,
+        "info_text": "Auto-detected Flux 2. euler/simple, 20 steps, CFG 1.0, guidance 3.5."
+    },
+    "flux 2 klein base 4b (Flux 2)": {
+        "description": "Flux 2 model (auto-detected from flux-2-klein-base-4b-fp8.safetensors)",
+        "diffusion_model": "flux-2-klein-base-4b-fp8.safetensors",
+        "vae": "flux2-vae.safetensors",
+        "clip_type": "flux2",
+        "default_clip": [
+            "qwen_3_4b_fp8_mixed.safetensors"
+        ],
+        "compatible_clips": {
+            "Qwen 3 4B (fp8)": [
+                "qwen_3_4b_fp8_mixed.safetensors"
+            ],
+            "Qwen 3 4B (bf16)": [
+                "qwen_3_4b.safetensors"
+            ],
+            "Mistral 3 Small (bf16)": [
+                "mistral_3_small_flux2_bf16.safetensors"
+            ]
+        },
+        "resolutions": {
+            "1:1 Square (1024x1024)": [
+                1024,
+                1024
+            ],
+            "3:2 Photo (1216x832)": [
+                1216,
+                832
+            ],
+            "2:3 Portrait (832x1216)": [
+                832,
+                1216
+            ],
+            "16:9 Wide (1344x768)": [
+                1344,
+                768
+            ],
+            "9:16 Tall (768x1344)": [
+                768,
+                1344
+            ],
+            "4:3 Standard (1152x896)": [
+                1152,
+                896
+            ],
+            "3:4 Portrait Standard (896x1152)": [
+                896,
+                1152
+            ]
+        },
+        "default_resolution": "1:1 Square (1024x1024)",
+        "megapixels": 1.0,
+        "supported_megapixels": [
+            "0.25 MP",
+            "0.5 MP",
+            "1.0 MP",
+            "1.5 MP",
+            "2.0 MP",
+            "4.0 MP"
+        ],
+        "default_megapixels": "1.0 MP",
+        "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "steps": 20,
+            "cfg": 1.0
+        },
+        "guidance": 3.5,
+        "apply_model_sampling_flux": true,
+        "negative_prompt_supported": false,
+        "info_text": "Auto-detected Flux 2. euler/simple, 20 steps, CFG 1.0, guidance 3.5."
     }
 }

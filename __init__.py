@@ -208,28 +208,139 @@ async def get_presets_path_api(request):
 
 
 # ──────────────────────────────────────────────────────────
-#  AI Model Identification (optional, requires Anthropic API key)
+#  AI features (multi-provider: Anthropic, OpenAI, or any
+#  OpenAI-compatible API like Ollama, LM Studio, etc.)
 # ──────────────────────────────────────────────────────────
 
-_AI_SETTINGS_KEY = "tlms.anthropic_api_key"
+# Settings keys stored in ComfyUI's settings system
+_SETTINGS_KEYS = {
+    "provider": "tlms.ai_provider",      # "anthropic", "openai", "custom"
+    "api_key": "tlms.ai_api_key",        # API key
+    "base_url": "tlms.ai_base_url",      # Custom base URL (for custom provider)
+    "model": "tlms.ai_model",            # Model name override
+}
 
-def _get_api_key() -> str:
-    """Get Anthropic API key from ComfyUI settings or environment."""
-    # Try environment variable first
-    key = os.environ.get("ANTHROPIC_API_KEY", "")
-    if key:
-        return key
-    # Try ComfyUI settings file
+# Defaults per provider
+_PROVIDER_DEFAULTS = {
+    "anthropic": {
+        "base_url": "https://api.anthropic.com/v1/messages",
+        "model": "claude-haiku-4-5-20251001",
+        "env_key": "ANTHROPIC_API_KEY",
+    },
+    "openai": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "model": "gpt-4o-mini",
+        "env_key": "OPENAI_API_KEY",
+    },
+    "custom": {
+        "base_url": "http://localhost:11434/v1/chat/completions",  # Ollama default
+        "model": "llama3",
+        "env_key": "",
+    },
+}
+
+
+def _get_ai_settings() -> dict:
+    """Get AI settings from ComfyUI settings or environment."""
+    settings = {}
     try:
         user_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "user", "default")
         settings_file = os.path.join(user_dir, "comfy.settings.json")
         if os.path.exists(settings_file):
             with open(settings_file, "r") as f:
-                settings = json.load(f)
-                return settings.get(_AI_SETTINGS_KEY, "")
+                all_settings = json.load(f)
+                for key, setting_id in _SETTINGS_KEYS.items():
+                    settings[key] = all_settings.get(setting_id, "")
     except Exception:
         pass
-    return ""
+    return settings
+
+
+def _resolve_ai_config(overrides: dict = None) -> dict:
+    """Resolve AI config from settings, env vars, and overrides."""
+    settings = _get_ai_settings()
+    provider = (overrides or {}).get("provider") or settings.get("provider") or "anthropic"
+    defaults = _PROVIDER_DEFAULTS.get(provider, _PROVIDER_DEFAULTS["anthropic"])
+
+    api_key = (overrides or {}).get("api_key") or settings.get("api_key") or ""
+    if not api_key and defaults["env_key"]:
+        api_key = os.environ.get(defaults["env_key"], "")
+
+    return {
+        "provider": provider,
+        "api_key": api_key,
+        "base_url": (overrides or {}).get("base_url") or settings.get("base_url") or defaults["base_url"],
+        "model": (overrides or {}).get("model") or settings.get("model") or defaults["model"],
+    }
+
+
+def _call_ai(prompt_text: str, config: dict, max_tokens: int = 500) -> str:
+    """Call AI API (Anthropic or OpenAI-compatible). Returns response text."""
+    import urllib.request
+    import urllib.error
+
+    provider = config["provider"]
+    api_key = config["api_key"]
+    base_url = config["base_url"]
+    model = config["model"]
+
+    if provider == "anthropic":
+        req_body = json.dumps({
+            "model": model,
+            "max_tokens": max_tokens,
+            "messages": [{"role": "user", "content": prompt_text}],
+        }).encode("utf-8")
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+        }
+    else:
+        # OpenAI-compatible format (works with OpenAI, Ollama, LM Studio, etc.)
+        req_body = json.dumps({
+            "model": model,
+            "max_tokens": max_tokens,
+            "messages": [{"role": "user", "content": prompt_text}],
+        }).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+
+    req = urllib.request.Request(base_url, data=req_body, headers=headers)
+
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        resp_data = json.loads(resp.read().decode("utf-8"))
+
+    # Extract text from response (handle both Anthropic and OpenAI formats)
+    if provider == "anthropic":
+        return resp_data.get("content", [{}])[0].get("text", "")
+    else:
+        return resp_data.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+
+def _parse_ai_json(text: str) -> dict:
+    """Parse JSON from AI response, handling markdown code blocks."""
+    text = text.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+    return json.loads(text)
+
+
+@server.PromptServer.instance.routes.get("/the_last_model_switcher/ai_settings")
+async def get_ai_settings_api(request):
+    """Get current AI settings (without exposing full key)."""
+    config = _resolve_ai_config()
+    masked_key = config["api_key"][:8] + "..." if len(config["api_key"]) > 8 else ("set" if config["api_key"] else "not set")
+    return web.json_response({
+        "provider": config["provider"],
+        "api_key_status": masked_key,
+        "base_url": config["base_url"],
+        "model": config["model"],
+        "providers": list(_PROVIDER_DEFAULTS.keys()),
+    })
 
 
 @server.PromptServer.instance.routes.post("/the_last_model_switcher/ai_identify")
@@ -237,10 +348,10 @@ async def ai_identify_api(request):
     """Use AI to identify a model and suggest optimal settings."""
     data = await request.json()
     preset_name = data.get("preset_name", "")
-    api_key = data.get("api_key", "") or _get_api_key()
+    config = _resolve_ai_config(data.get("ai_config"))
 
-    if not api_key:
-        return web.json_response({"error": "No Anthropic API key configured. Set it via the node UI or ANTHROPIC_API_KEY env var."}, status=400)
+    if not config["api_key"] and config["provider"] != "custom":
+        return web.json_response({"error": "No API key configured. Click 'AI Settings' to set up your AI provider."}, status=400)
 
     presets = load_presets()
     if preset_name not in presets or presets[preset_name] is None:
@@ -295,42 +406,9 @@ Based on the filename and architecture, identify this model and respond with a J
 
 Be precise. Use common knowledge about popular models. If the filename matches a known model (e.g. dreamshaperXL, realvisxl, juggernaut, pony, animagine, flux, sd3.5, etc.), use the widely-known optimal settings for that specific model."""
 
-    # Call Anthropic API
     try:
-        import urllib.request
-        import urllib.error
-
-        req_body = json.dumps({
-            "model": "claude-haiku-4-5-20251001",
-            "max_tokens": 500,
-            "messages": [{"role": "user", "content": prompt}],
-        }).encode("utf-8")
-
-        req = urllib.request.Request(
-            "https://api.anthropic.com/v1/messages",
-            data=req_body,
-            headers={
-                "Content-Type": "application/json",
-                "x-api-key": api_key,
-                "anthropic-version": "2023-06-01",
-            },
-        )
-
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            resp_data = json.loads(resp.read().decode("utf-8"))
-
-        # Extract text from response
-        ai_text = resp_data.get("content", [{}])[0].get("text", "")
-
-        # Parse JSON from response (handle markdown code blocks)
-        ai_text = ai_text.strip()
-        if ai_text.startswith("```"):
-            ai_text = ai_text.split("\n", 1)[1] if "\n" in ai_text else ai_text[3:]
-            if ai_text.endswith("```"):
-                ai_text = ai_text[:-3]
-            ai_text = ai_text.strip()
-
-        ai_result = json.loads(ai_text)
+        ai_text = _call_ai(prompt, config)
+        ai_result = _parse_ai_json(ai_text)
 
         # Update preset with AI suggestions
         if ai_result.get("sampler_name"):
@@ -360,10 +438,7 @@ Be precise. Use common knowledge about popular models. If the filename matches a
             "updated_preset": preset_name,
         })
 
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8") if e.fp else ""
-        return web.json_response({"error": f"Anthropic API error ({e.code}): {error_body}"}, status=500)
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         return web.json_response({"error": f"Could not parse AI response as JSON: {ai_text[:200]}"}, status=500)
     except Exception as e:
         return web.json_response({"error": f"AI identification failed: {str(e)}"}, status=500)
@@ -378,10 +453,10 @@ async def enhance_prompt_api(request):
     clip_type = data.get("clip_type", "")
     style = data.get("style", "enhance")
     custom_instruction = data.get("custom_instruction", "")
-    api_key = data.get("api_key", "") or _get_api_key()
+    config = _resolve_ai_config(data.get("ai_config"))
 
-    if not api_key:
-        return web.json_response({"error": "No Anthropic API key configured."}, status=400)
+    if not config["api_key"] and config["provider"] != "custom":
+        return web.json_response({"error": "No API key configured. Click 'AI Settings' to set up your AI provider."}, status=400)
     if not prompt_text.strip():
         return web.json_response({"error": "No prompt to enhance."}, status=400)
 
@@ -419,27 +494,7 @@ USER'S ORIGINAL PROMPT:
 Write ONLY the enhanced prompt text. No explanations, no quotes, no markdown. Just the prompt ready to paste."""
 
     try:
-        import urllib.request
-        req_body = json.dumps({
-            "model": "claude-haiku-4-5-20251001",
-            "max_tokens": 500,
-            "messages": [{"role": "user", "content": ai_prompt}],
-        }).encode("utf-8")
-
-        req = urllib.request.Request(
-            "https://api.anthropic.com/v1/messages",
-            data=req_body,
-            headers={
-                "Content-Type": "application/json",
-                "x-api-key": api_key,
-                "anthropic-version": "2023-06-01",
-            },
-        )
-
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            resp_data = json.loads(resp.read().decode("utf-8"))
-
-        enhanced = resp_data.get("content", [{}])[0].get("text", "").strip()
+        enhanced = _call_ai(ai_prompt, config).strip()
         return web.json_response({"enhanced": enhanced, "style": style})
 
     except Exception as e:
@@ -928,7 +983,6 @@ class TheLastModelSwitcher(io.ComfyNode):
             ],
             outputs=[
                 io.Model.Output(display_name="MODEL"),
-                io.Clip.Output(display_name="CLIP"),
                 io.Vae.Output(display_name="VAE"),
                 io.Conditioning.Output(display_name="positive",
                     tooltip="Positive conditioning from your prompt. Connect to KSampler positive."),
@@ -1243,7 +1297,7 @@ class TheLastModelSwitcher(io.ComfyNode):
         }
 
         return io.NodeOutput(
-            loaded_model, clip_obj, vae,
+            loaded_model, vae,
             positive_cond, negative_cond,
             width, height,
             out_steps, out_cfg,
