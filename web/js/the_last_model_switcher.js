@@ -11,11 +11,11 @@ function aspectStr(w,h){const g=gcd(w,h);return `${w/g}:${h/g}`}
 
 /* ─── Output slot index -> value key mapping ─── */
 const OUTPUT_MAP = {
-    3: "width",
-    4: "height",
-    5: "steps",
-    6: "cfg",
-    7: "guidance",
+    5: "width",
+    6: "height",
+    7: "steps",
+    8: "cfg",
+    9: "guidance",
 };
 
 /* ─── Find a widget by name (handles DynamicCombo prefix variants) ─── */
@@ -264,7 +264,7 @@ app.registerExtension({
     async beforeRegisterNodeDef(nodeType, nodeData) {
         if(nodeData.name!=="TheLastModelSwitcher") return;
 
-        const OUTPUT_LABELS = ["MODEL","CLIP","VAE","width","height","steps","cfg","guidance"];
+        const OUTPUT_LABELS = ["MODEL","CLIP","VAE","positive","negative","width","height","steps","cfg","guidance"];
 
         const ox=nodeType.prototype.onExecuted;
         nodeType.prototype.onExecuted=function(msg){

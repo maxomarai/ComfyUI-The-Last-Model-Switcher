@@ -294,9 +294,10 @@ class TheLastModelSwitcher(io.ComfyNode):
     text encoder goes with which model.
 
     OUTPUTS:
-      MODEL / CLIP / VAE       Core model components ready for KSampler
-      width / height           Resolution (preset, custom, or megapixel-scaled)
-      steps / cfg / guidance   Sampler settings (preset defaults or your overrides)
+      MODEL / CLIP / VAE         Core model components ready for KSampler
+      positive / negative        CONDITIONING from your prompt (negative is empty for Flux)
+      width / height             Resolution (preset, custom, or megapixel-scaled)
+      steps / cfg / guidance     Sampler settings (preset defaults or your overrides)
     """
 
     @classmethod
@@ -315,6 +316,12 @@ class TheLastModelSwitcher(io.ComfyNode):
             inputs=[
                 io.DynamicCombo.Input("model", options=_build_dynamic_options(),
                     tooltip="Select your model. Compatible CLIP and resolution options appear automatically."),
+
+                # ── Prompt inputs ──
+                io.String.Input("positive_prompt", default="", multiline=True,
+                    tooltip="Positive prompt. Encoded with the selected CLIP model."),
+                io.String.Input("negative_prompt", default="", multiline=True,
+                    tooltip="Negative prompt. Only used for models that support it (SD, SDXL). Ignored for Flux."),
 
                 # ── Value inputs (auto-populated from preset, editable) ──
                 io.Int.Input("width", default=1024, min=64, max=8192, step=8,
@@ -337,6 +344,10 @@ class TheLastModelSwitcher(io.ComfyNode):
                 io.Model.Output(display_name="MODEL"),
                 io.Clip.Output(display_name="CLIP"),
                 io.Vae.Output(display_name="VAE"),
+                io.Conditioning.Output(display_name="positive",
+                    tooltip="Positive conditioning from your prompt. Connect to KSampler positive."),
+                io.Conditioning.Output(display_name="negative",
+                    tooltip="Negative conditioning. Empty for Flux models. Connect to KSampler negative."),
                 io.Int.Output(display_name="width"),
                 io.Int.Output(display_name="height"),
                 io.Int.Output(display_name="steps"),
@@ -349,6 +360,8 @@ class TheLastModelSwitcher(io.ComfyNode):
     @classmethod
     def execute(
         cls, model: dict,
+        positive_prompt: str = "",
+        negative_prompt: str = "",
         width: int = 1024,
         height: int = 1024,
         steps: int = 20,
@@ -501,6 +514,21 @@ class TheLastModelSwitcher(io.ComfyNode):
         if loaded_model is None:
             raise ValueError(f"Model '{preset_name}' has no model file configured.")
 
+        # ── Encode prompts to CONDITIONING ──
+        positive_cond = None
+        negative_cond = None
+        if clip_obj is not None:
+            # Positive prompt
+            pos_text = positive_prompt if positive_prompt else ""
+            pos_tokens = clip_obj.tokenize(pos_text)
+            positive_cond = clip_obj.encode_from_tokens_scheduled(pos_tokens)
+
+            # Negative prompt (empty for Flux, user text for SD/SDXL)
+            neg_support = pcfg.get("negative_prompt_supported", not is_flux)
+            neg_text = negative_prompt if (negative_prompt and neg_support) else ""
+            neg_tokens = clip_obj.tokenize(neg_text)
+            negative_cond = clip_obj.encode_from_tokens_scheduled(neg_tokens)
+
         # ── VAE tiling for high resolutions ──
         if vae is not None:
             try:
@@ -586,7 +614,10 @@ class TheLastModelSwitcher(io.ComfyNode):
             info.append(f"  Guidance:   {guidance_value}")
         if is_flux:
             info.append(f"  ModelSamplingFlux: applied (shift auto-calculated)")
-        info.append(f"  Neg prompt: {'supported' if neg_support else 'not used'}")
+        if neg_support:
+            info.append(f"  Neg prompt: supported (output encoded)")
+        else:
+            info.append(f"  Neg prompt: not used (empty conditioning output)")
         if custom_info:
             info.append("")
             info.append(f"  {custom_info}")
@@ -616,6 +647,7 @@ class TheLastModelSwitcher(io.ComfyNode):
 
         return io.NodeOutput(
             loaded_model, clip_obj, vae,
+            positive_cond, negative_cond,
             width, height,
             out_steps, out_cfg,
             guidance_value,
