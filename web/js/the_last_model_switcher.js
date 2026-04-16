@@ -291,6 +291,9 @@ app.registerExtension({
     nodeCreated(node) {
         if(node.comfyClass!=="TheLastModelSwitcher" && node.type!=="TheLastModelSwitcher") return;
 
+        /* Default wider size */
+        node.size[0] = Math.max(node.size[0], 380);
+
         let timer=null;
         let lastModelName = "";
 
