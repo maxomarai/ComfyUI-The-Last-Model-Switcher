@@ -317,6 +317,22 @@ app.registerExtension({
                 || a.megapixels !== b.megapixels || a.clip !== b.clip;
         }
 
+        /* Read current widget values and push to connected nodes */
+        function pushCurrentValues(){
+            const getVal = (name) => {
+                const w = node.widgets?.find(w => w.name === name);
+                return w ? w.value : undefined;
+            };
+            const vals = {
+                width: String(getVal("width") || ""),
+                height: String(getVal("height") || ""),
+                steps: String(getVal("steps") || ""),
+                cfg: String(getVal("cfg") || ""),
+                guidance: String(getVal("guidance") || ""),
+            };
+            pushValuesToConnectedNodes(node, vals);
+        }
+
         async function handleChange(cur, prev){
             if(!cur.model) return;
             clearTimeout(updateTimer);
@@ -332,6 +348,7 @@ app.registerExtension({
                     }
 
                     showText(node, formatInfo(i));
+                    pushCurrentValues();
                 }catch(e){showText(node,"Error: "+e.message)}
             }, 100);
         }
