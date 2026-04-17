@@ -830,5 +830,83 @@ app.registerExtension({
                 showText(node, `Presets reloaded: ${d.count} models\n\n${d.names.join("\n")}\n\n(Restart ComfyUI to update dropdown)`);
             } catch (e) { showText(node, "Error reloading: " + e.message); }
         }, { serialize: false });
+
+        /* ═══════════════════════════════════════════════════
+         * REORDER WIDGETS for logical layout:
+         *
+         *   model (DynamicCombo + sub-inputs)
+         *   AI Identify Model        \
+         *   Show Model Info            > model tools
+         *   Scan for New Models       /
+         *   enhance_style             \
+         *   AI Enhance Prompt          > prompt tools
+         *   Apply Enhanced Prompt     /
+         *   positive_prompt
+         *   negative_prompt
+         *   seed
+         *   width, height, steps, cfg, guidance
+         *   weight_dtype (advanced)
+         *   AI Settings               \
+         *   Edit Presets File          > admin tools
+         *   Reload Presets            /
+         *   _tlms_info (info panel)
+         * ═══════════════════════════════════════════════════ */
+        requestAnimationFrame(() => {
+            if (!node.widgets || node.widgets.length < 5) return;
+
+            const byName = {};
+            for (const w of node.widgets) {
+                byName[w.name] = w;
+            }
+
+            /* Find the button widgets by their display text */
+            const findBtn = (text) => node.widgets.find(
+                w => w.type === "button" && w.name === text
+            );
+
+            const btnIdentify = findBtn("AI Identify Model");
+            const btnShowInfo = findBtn("Show Model Info");
+            const btnScan = findBtn("Scan for New Models");
+            const comboStyle = byName["enhance_style"];
+            const btnEnhance = findBtn("AI Enhance Prompt");
+            const btnApply = findBtn("Apply Enhanced Prompt");
+            const btnAiSettings = findBtn("AI Settings");
+            const btnEditPresets = findBtn("Edit Presets File");
+            const btnReload = findBtn("Reload Presets");
+
+            /* Widgets to insert before positive_prompt */
+            const beforePrompt = [comboStyle, btnEnhance, btnApply].filter(Boolean);
+            /* Widgets to insert after model (before positive_prompt, before prompt tools) */
+            const afterModel = [btnIdentify, btnShowInfo, btnScan].filter(Boolean);
+            /* Widgets to go at the end (before info panel) */
+            const adminTools = [btnAiSettings, btnEditPresets, btnReload].filter(Boolean);
+
+            /* Remove all movable widgets from current positions */
+            const toMove = new Set([...beforePrompt, ...afterModel, ...adminTools]);
+            const remaining = node.widgets.filter(w => !toMove.has(w));
+
+            /* Find insertion points */
+            const posPromptIdx = remaining.findIndex(w => w.name === "positive_prompt");
+            const infoIdx = remaining.findIndex(w => w.name === "_tlms_info");
+
+            if (posPromptIdx >= 0) {
+                /* Insert prompt tools right before positive_prompt */
+                remaining.splice(posPromptIdx, 0, ...beforePrompt);
+                /* Insert model tools before prompt tools (= before positive_prompt, before beforePrompt) */
+                const newPosIdx = remaining.findIndex(w => w.name === "positive_prompt");
+                remaining.splice(newPosIdx - beforePrompt.length, 0, ...afterModel);
+            }
+
+            /* Insert admin tools before info panel (or at end) */
+            const finalInfoIdx = remaining.findIndex(w => w.name === "_tlms_info");
+            if (finalInfoIdx >= 0) {
+                remaining.splice(finalInfoIdx, 0, ...adminTools);
+            } else {
+                remaining.push(...adminTools);
+            }
+
+            node.widgets = remaining;
+            node.setDirtyCanvas(true, true);
+        });
     },
 });
