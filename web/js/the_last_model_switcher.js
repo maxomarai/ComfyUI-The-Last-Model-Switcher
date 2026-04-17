@@ -299,36 +299,54 @@ function getOrCreateTextWidget(node) {
     let w = node.widgets?.find(w => w.name === "_tlms_info");
     if (w) return w;
 
-    const widgetData = ComfyWidgets["STRING"](node, "_tlms_info", ["STRING", { multiline: true }], app);
-    w = widgetData.widget;
-    w.inputEl.readOnly = true;
-    w.inputEl.style.opacity = "0.85";
-    w.inputEl.style.fontSize = "10px";
-    w.inputEl.style.fontFamily = "'Consolas', 'JetBrains Mono', monospace";
-    w.inputEl.style.background = "rgba(12,15,25,0.92)";
-    w.inputEl.style.color = "#c0c8d8";
-    w.inputEl.style.border = "1px solid rgba(60,70,90,0.4)";
-    w.inputEl.style.borderRadius = "6px";
-    w.inputEl.style.padding = "8px 10px";
-    w.inputEl.style.lineHeight = "1.55";
-    w.inputEl.style.resize = "none";
-    w.serialize = false;
-    w.value = "";
-    return w;
+    try {
+        const widgetData = ComfyWidgets["STRING"](node, "_tlms_info", ["STRING", { multiline: true }], app);
+        w = widgetData.widget;
+        w.serialize = false;
+        if (!w.value) w.value = "";
+
+        /* Style the DOM element if available (ComfyUI V2 may not create inputEl). */
+        if (w.inputEl) {
+            try {
+                w.inputEl.readOnly = true;
+                w.inputEl.style.opacity = "0.85";
+                w.inputEl.style.fontSize = "10px";
+                w.inputEl.style.fontFamily = "'Consolas', 'JetBrains Mono', monospace";
+                w.inputEl.style.background = "rgba(12,15,25,0.92)";
+                w.inputEl.style.color = "#c0c8d8";
+                w.inputEl.style.border = "1px solid rgba(60,70,90,0.4)";
+                w.inputEl.style.borderRadius = "6px";
+                w.inputEl.style.padding = "8px 10px";
+                w.inputEl.style.lineHeight = "1.55";
+                w.inputEl.style.resize = "none";
+            } catch (e) { /* ignore styling errors */ }
+        }
+        return w;
+    } catch (e) {
+        console.warn("[TLMS] Could not create info widget:", e);
+        return null;
+    }
 }
 
 /* ─── Show info text in node ─── */
 function showText(node, text) {
     const w = getOrCreateTextWidget(node);
+    if (!w) return;
     w.value = text;
-    w.inputEl.value = text;
-    w.inputEl.style.height = "auto";
-    w.inputEl.style.height = w.inputEl.scrollHeight + "px";
+    if (w.inputEl) {
+        try {
+            w.inputEl.value = text;
+            w.inputEl.style.height = "auto";
+            w.inputEl.style.height = w.inputEl.scrollHeight + "px";
+        } catch (e) { /* ignore DOM errors */ }
+    }
     requestAnimationFrame(() => {
-        const sz = node.computeSize();
-        node.size[0] = Math.max(node.size[0], sz[0]);
-        node.size[1] = Math.max(node.size[1], sz[1]);
-        node.setDirtyCanvas(true, true);
+        if (node.computeSize) {
+            const sz = node.computeSize();
+            node.size[0] = Math.max(node.size[0], sz[0]);
+            node.size[1] = Math.max(node.size[1], sz[1]);
+        }
+        node.setDirtyCanvas?.(true, true);
     });
 }
 
@@ -685,12 +703,28 @@ app.registerExtension({
          * Guarded against duplicate creation when nodeCreated fires on
          * workflow load. */
         if (!node.widgets?.find(w => w.name === "enhance_instruction")) {
-            const customWidget = ComfyWidgets["STRING"](node, "enhance_instruction", ["STRING", { multiline: false }], app);
-            customWidget.widget.inputEl.placeholder = "Custom instruction (optional, overrides style)";
-            customWidget.widget.inputEl.style.fontSize = "10px";
-            customWidget.widget.inputEl.style.opacity = "0.8";
-            customWidget.widget.serialize = false;
-            customWidget.widget.value = "";
+            try {
+                const customWidget = ComfyWidgets["STRING"](
+                    node, "enhance_instruction",
+                    ["STRING", { multiline: false, placeholder: "Custom instruction (optional, overrides style)" }],
+                    app
+                );
+                const w = customWidget.widget;
+                w.serialize = false;
+                if (!w.value) w.value = "";
+
+                /* In ComfyUI V2, inputEl may not exist or be attached yet.
+                 * Apply DOM styling if available, otherwise skip silently. */
+                if (w.inputEl) {
+                    try {
+                        w.inputEl.placeholder = "Custom instruction (optional, overrides style)";
+                        w.inputEl.style.fontSize = "10px";
+                        w.inputEl.style.opacity = "0.8";
+                    } catch (e) { /* ignore styling errors */ }
+                }
+            } catch (e) {
+                console.warn("[TLMS] Could not create enhance_instruction widget:", e);
+            }
         }
 
         /* (c) AI Enhance Prompt */
