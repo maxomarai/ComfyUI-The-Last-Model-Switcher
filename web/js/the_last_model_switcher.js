@@ -324,27 +324,24 @@ app.registerExtension({
             }
             const vals = msg?.output_values?.[0];
             if (vals && this.outputs) {
-                /* Store last seed for "Reuse Last Seed" */
                 if (vals.seed) this._lastSeed = parseInt(vals.seed, 10);
 
-                const isFlux = vals.is_flux;
-
+                /* Update value labels on outputs */
                 for (let i = 0; i < this.outputs.length; i++) {
                     const out = this.outputs[i];
                     const baseName = OUTPUT_LABELS[i];
-                    if (!baseName) continue;
-
-                    /* Dynamic labels for positive/negative based on model type */
-                    if (baseName === "positive") {
-                        out.label = isFlux
-                            ? `positive (+guidance ${vals.guidance_value || ""})`
-                            : "positive";
-                    } else if (baseName === "negative") {
-                        out.label = isFlux ? "negative (unused)" : "negative";
-                    } else if (vals[baseName] !== undefined) {
+                    if (baseName && vals[baseName] !== undefined) {
                         out.label = `${baseName}: ${vals[baseName]}`;
                     }
                 }
+
+                /* Update positive/negative labels based on model type */
+                /* (uses the shared function defined in nodeCreated scope) */
+                const infoForLabels = {
+                    is_flux: vals.is_flux,
+                    guidance: parseFloat(vals.guidance_value) || 0,
+                };
+                if (this._updateOutputLabels) this._updateOutputLabels(infoForLabels);
                 this.setDirtyCanvas(true, true);
                 pushValuesToConnectedNodes(this, vals);
             }
@@ -455,6 +452,28 @@ app.registerExtension({
             pushValuesToConnectedNodes(node, vals);
         }
 
+        /* Update output labels based on model type (Flux vs SD/SDXL).
+         * Also stored on node so onExecuted can call it. */
+        node._updateOutputLabels = updateOutputLabels;
+        function updateOutputLabels(info) {
+            if (!node.outputs || !info) return;
+            const isFlux = info.is_flux;
+            const guidanceVal = info.guidance || 0;
+
+            for (let i = 0; i < node.outputs.length; i++) {
+                const out = node.outputs[i];
+                const baseName = OUTPUT_LABELS[i];
+                if (baseName === "positive") {
+                    out.label = isFlux && guidanceVal > 0
+                        ? `positive (+guidance ${guidanceVal})`
+                        : "positive";
+                } else if (baseName === "negative") {
+                    out.label = isFlux ? "negative (unused)" : "negative";
+                }
+            }
+            node.setDirtyCanvas(true, true);
+        }
+
         async function handleChange(cur, prev) {
             if (!cur.model) return;
 
@@ -474,6 +493,7 @@ app.registerExtension({
                             updateResolution(node, i, cur.resolution, cur.megapixels);
                         }
 
+                        updateOutputLabels(i);
                         showText(node, formatInfo(i, checkConnections(node, i)));
                         pushCurrentValues();
                     } catch (e) { showText(node, "Error: " + e.message); }
