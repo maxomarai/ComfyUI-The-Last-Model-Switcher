@@ -1066,78 +1066,86 @@ app.registerExtension({
          *   [Reload Presets]          /
          *   _tlms_info (info panel)
          * ═══════════════════════════════════════════════════ */
-        /* Ensure info widget exists before reorder so admin tools find their target */
+        /* Ensure info widget exists before reorder */
         getOrCreateTextWidget(node);
 
+        /*
+         * Declarative widget order. Each name is looked up in node.widgets.
+         * Widgets found are placed in this order. Any widgets NOT in this
+         * list are appended at the end (nothing is ever lost).
+         */
+        const DESIRED_ORDER = [
+            /* Model selection */
+            "model",
+            "AI Identify Model",
+            "Show Model Info",
+            "Scan for New Models",
+
+            /* Prompt tools */
+            "enhance_style",
+            "enhance_instruction",
+            "AI Enhance Prompt",
+            "Apply Enhanced Prompt",
+
+            /* Prompts */
+            "positive_prompt",
+            "negative_prompt",
+
+            /* Seed + tools */
+            "seed",
+            "New Random Seed",
+            "Reuse Last Seed",
+            "Copy Seed",
+            "Paste Seed",
+
+            /* Generation settings */
+            "width",
+            "height",
+            "steps",
+            "cfg",
+            "guidance",
+
+            /* Advanced */
+            "weight_dtype",
+
+            /* Admin tools */
+            "AI Settings",
+            "Test AI Connection",
+            "Edit Presets File",
+            "Reload Presets",
+
+            /* Info panel (always last) */
+            "_tlms_info",
+        ];
+
         requestAnimationFrame(() => {
-            if (!node.widgets || node.widgets.length < 5) return;
+            if (!node.widgets || !node.widgets.length) return;
 
-            const byName = (name) => node.widgets.find(w => w.name === name);
-            const findBtn = (text) => node.widgets.find(w => w.type === "button" && w.name === text);
+            const widgetsByName = new Map();
+            for (const w of node.widgets) {
+                widgetsByName.set(w.name, w);
+            }
 
-            /* Group widgets by where they should go */
-            const modelTools = [
-                findBtn("AI Identify Model"),
-                findBtn("Show Model Info"),
-                findBtn("Scan for New Models"),
-            ].filter(Boolean);
+            const reordered = [];
+            const used = new Set();
 
-            const promptTools = [
-                byName("enhance_style"),
-                byName("enhance_instruction"),
-                findBtn("AI Enhance Prompt"),
-                findBtn("Apply Enhanced Prompt"),
-            ].filter(Boolean);
-
-            const seedTools = [
-                findBtn("New Random Seed"),
-                findBtn("Reuse Last Seed"),
-                findBtn("Copy Seed"),
-                findBtn("Paste Seed"),
-            ].filter(Boolean);
-
-            const adminTools = [
-                findBtn("AI Settings"),
-                findBtn("Test AI Connection"),
-                findBtn("Edit Presets File"),
-                findBtn("Reload Presets"),
-            ].filter(Boolean);
-
-            /* Remove all movable widgets */
-            const allMovable = new Set([...modelTools, ...promptTools, ...seedTools, ...adminTools]);
-            const ordered = node.widgets.filter(w => !allMovable.has(w));
-
-            /* Helper: insert group before a named widget.
-             * If target not found, append group at end (never lose widgets). */
-            const insertBefore = (arr, targetName, group) => {
-                if (!group.length) return;
-                const idx = arr.findIndex(w => w.name === targetName);
-                if (idx >= 0) {
-                    arr.splice(idx, 0, ...group);
-                } else {
-                    arr.push(...group);
+            /* First pass: widgets in desired order */
+            for (const name of DESIRED_ORDER) {
+                const w = widgetsByName.get(name);
+                if (w && !used.has(w)) {
+                    reordered.push(w);
+                    used.add(w);
                 }
-            };
+            }
 
-            /* Helper: insert group after a named widget.
-             * If target not found, append group at end. */
-            const insertAfter = (arr, targetName, group) => {
-                if (!group.length) return;
-                const idx = arr.findIndex(w => w.name === targetName);
-                if (idx >= 0) {
-                    arr.splice(idx + 1, 0, ...group);
-                } else {
-                    arr.push(...group);
+            /* Second pass: any widget not in DESIRED_ORDER (preserves them) */
+            for (const w of node.widgets) {
+                if (!used.has(w)) {
+                    reordered.push(w);
                 }
-            };
+            }
 
-            /* Insert in reverse order of position (bottom-up) so indices stay valid */
-            insertBefore(ordered, "_tlms_info", adminTools);
-            insertAfter(ordered, "seed", seedTools);
-            insertBefore(ordered, "positive_prompt", promptTools);
-            insertBefore(ordered, "positive_prompt", modelTools);
-
-            node.widgets = ordered;
+            node.widgets = reordered;
             node.setDirtyCanvas(true, true);
         });
     },
