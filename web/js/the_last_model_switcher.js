@@ -1066,6 +1066,9 @@ app.registerExtension({
          *   [Reload Presets]          /
          *   _tlms_info (info panel)
          * ═══════════════════════════════════════════════════ */
+        /* Ensure info widget exists before reorder so admin tools find their target */
+        getOrCreateTextWidget(node);
+
         requestAnimationFrame(() => {
             if (!node.widgets || node.widgets.length < 5) return;
 
@@ -1104,16 +1107,28 @@ app.registerExtension({
             const allMovable = new Set([...modelTools, ...promptTools, ...seedTools, ...adminTools]);
             const ordered = node.widgets.filter(w => !allMovable.has(w));
 
-            /* Helper: insert group before a named widget */
+            /* Helper: insert group before a named widget.
+             * If target not found, append group at end (never lose widgets). */
             const insertBefore = (arr, targetName, group) => {
+                if (!group.length) return;
                 const idx = arr.findIndex(w => w.name === targetName);
-                if (idx >= 0) arr.splice(idx, 0, ...group);
+                if (idx >= 0) {
+                    arr.splice(idx, 0, ...group);
+                } else {
+                    arr.push(...group);
+                }
             };
 
-            /* Helper: insert group after a named widget */
+            /* Helper: insert group after a named widget.
+             * If target not found, append group at end. */
             const insertAfter = (arr, targetName, group) => {
+                if (!group.length) return;
                 const idx = arr.findIndex(w => w.name === targetName);
-                if (idx >= 0) arr.splice(idx + 1, 0, ...group);
+                if (idx >= 0) {
+                    arr.splice(idx + 1, 0, ...group);
+                } else {
+                    arr.push(...group);
+                }
             };
 
             /* Insert in reverse order of position (bottom-up) so indices stay valid */
