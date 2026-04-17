@@ -336,12 +336,18 @@ app.registerExtension({
                 }
 
                 /* Update positive/negative labels based on model type */
-                /* (uses the shared function defined in nodeCreated scope) */
                 const infoForLabels = {
                     is_flux: vals.is_flux,
                     guidance: parseFloat(vals.guidance_value) || 0,
                 };
                 if (this._updateOutputLabels) this._updateOutputLabels(infoForLabels);
+
+                /* Trigger Vue reactivity for output labels */
+                this.graph?.trigger?.("node:slot-label:changed", {
+                    nodeId: this.id,
+                    slotType: 1,
+                });
+                this.outputs = [...this.outputs];
                 this.setDirtyCanvas(true, true);
                 pushValuesToConnectedNodes(this, vals);
             }
@@ -471,6 +477,14 @@ app.registerExtension({
                     out.label = isFlux ? "negative (unused)" : "negative";
                 }
             }
+
+            /* Trigger Vue reactivity (ComfyUI V2 uses shallowReactive outputs) */
+            node.graph?.trigger?.("node:slot-label:changed", {
+                nodeId: node.id,
+                slotType: 1,
+            });
+            /* Fallback: force array replacement to trigger shallowReactive */
+            node.outputs = [...node.outputs];
             node.setDirtyCanvas(true, true);
         }
 
