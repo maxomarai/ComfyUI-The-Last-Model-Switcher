@@ -242,55 +242,54 @@ function checkConnections(node, info) {
 /* ─── Format info as readable text ─── */
 function formatInfo(i, warnings) {
     const lines = [];
-    const sep = "=".repeat(48);
-    const sep2 = "~".repeat(48);
+    const hr = "─".repeat(46);
 
-    lines.push(sep);
-    lines.push("  THE LAST MODEL SWITCHER");
-    lines.push(`  ${i.name}`);
-    lines.push(sep);
+    lines.push(`▸ ${i.name}`);
+    if (i.description) {
+        lines.push(`  ${i.description}`);
+    }
     lines.push("");
-    if (i.description) lines.push(i.description);
+    lines.push(hr);
+
+    /* Model files */
+    lines.push(`  model    ${i.diffusion_model}`);
+    lines.push(`  clip     ${i.clip_type}`);
+    lines.push(`  vae      ${i.vae}`);
+
+    /* Recommended settings */
     lines.push("");
-    lines.push(`  Model:      ${i.diffusion_model}`);
-    lines.push(`  CLIP:       ${i.clip_type}`);
-    lines.push(`  VAE:        ${i.vae}`);
-    lines.push("");
-    lines.push(sep2);
-    lines.push("  RECOMMENDED SETTINGS");
-    lines.push(sep2);
-    lines.push(`  Sampler:    ${i.sampler}`);
-    lines.push(`  Scheduler:  ${i.scheduler}`);
-    if (i.is_flux) lines.push("  ModelSamplingFlux: auto-applied");
-    lines.push(`  Neg prompt: ${i.negative_prompt_supported ? "supported" : "not used"}`);
+    lines.push(hr);
+    lines.push("  Recommended settings");
+    lines.push(hr);
+    lines.push(`  sampler    ${i.sampler} / ${i.scheduler}`);
+    lines.push(`  steps      ${i.steps}`);
+    lines.push(`  cfg        ${i.cfg}`);
+    if (i.guidance > 0) {
+        lines.push(`  guidance   ${i.guidance} (auto-applied for Flux)`);
+    }
+    lines.push(`  negative   ${i.negative_prompt_supported ? "supported" : "not used (Flux)"}`);
 
     if (i.info_text) {
         lines.push("");
         lines.push(`  ${i.info_text}`);
     }
 
-    const clips = Object.keys(i.compatible_clips || {});
-    if (clips.length) {
-        lines.push("");
-        lines.push("  Compatible CLIPs:");
-        clips.forEach(c => lines.push(`    - ${c}`));
-    }
-
+    /* Warnings (only shown if any) */
+    const allWarnings = [];
     if (i.missing_files?.length) {
-        lines.push("");
-        lines.push(`  WARNING: Missing: ${i.missing_files.join(", ")}`);
+        allWarnings.push(`Missing files: ${i.missing_files.join(", ")}`);
     }
-
     if (warnings && warnings.length) {
+        allWarnings.push(...warnings);
+    }
+    if (allWarnings.length) {
         lines.push("");
-        lines.push("  !! WARNINGS !!");
-        warnings.forEach(w => lines.push(`  >> ${w}`));
+        lines.push(hr);
+        lines.push("  Warnings");
+        lines.push(hr);
+        allWarnings.forEach(w => lines.push(`  • ${w}`));
     }
 
-    lines.push("");
-    lines.push(sep);
-    lines.push("  BY MAXOMARAI");
-    lines.push(sep);
     return lines.join("\n");
 }
 
@@ -400,50 +399,50 @@ app.registerExtension({
     nodeCreated(node) {
         if (node.comfyClass !== "TheLastModelSwitcher" && node.type !== "TheLastModelSwitcher") return;
 
-        node.size[0] = Math.max(node.size[0], 380);
+        /* Wider default - fits prompt fields and info panel comfortably */
+        node.size[0] = Math.max(node.size[0], 440);
 
         /* ─── Welcome text ─── */
         requestAnimationFrame(() => {
             const welcome = [
-                "THE LAST MODEL SWITCHER",
-                "by Maxomarai",
-                "================================================",
+                "▸ The Last Model Switcher",
+                "  by Maxomarai",
                 "",
-                "  GETTING STARTED:",
+                "──────────────────────────────────────────────",
+                "  Quick start",
+                "──────────────────────────────────────────────",
                 "",
-                "  1. Select a model from the dropdown",
-                "     (only models you have downloaded appear)",
+                "  1. Select a model from the dropdown above.",
+                "  2. Write your prompt(s).",
+                "  3. Connect the outputs:",
                 "",
-                "  2. Write your positive (and optionally negative) prompt",
+                "     model     →  KSampler",
+                "     vae       →  VAE Decode",
+                "     positive  →  KSampler (positive)",
+                "     negative  →  KSampler (negative)",
+                "     width     →  EmptyLatentImage",
+                "     height    →  EmptyLatentImage",
+                "     steps     →  KSampler",
+                "     cfg       →  KSampler",
+                "     seed      →  KSampler",
                 "",
-                "  3. Connect outputs to your workflow:",
-                "     model    -> KSampler (model)",
-                "     vae      -> VAE Decode",
-                "     positive -> KSampler (positive)  [+FluxGuidance for Flux]",
-                "     negative -> KSampler (negative)  [empty for Flux]",
-                "     width    -> EmptyLatentImage (width)",
-                "     height   -> EmptyLatentImage (height)",
-                "     steps    -> KSampler (steps)",
-                "     cfg      -> KSampler (cfg)",
-                "     seed     -> KSampler (seed)",
+                "  Everything else is automatic.",
+                "  FluxGuidance is baked into the positive",
+                "  conditioning for Flux models.",
                 "",
-                "  Everything else is automatic!",
+                "──────────────────────────────────────────────",
+                "  Tools on this node",
+                "──────────────────────────────────────────────",
                 "",
-                "  BUTTONS:",
-                "  AI Identify Model    - use AI for optimal settings",
-                "  AI Enhance Prompt    - improve your prompt with AI",
-                "  Show Model Info      - view current model details",
-                "  Scan for New Models  - find models in your folders",
-                "  New Random Seed      - generate a new random seed",
-                "  Reuse Last Seed      - use the previous execution seed",
-                "  Copy / Paste Seed    - share seeds via clipboard",
-                "  AI Settings          - configure AI provider (Anthropic,",
-                "                         OpenAI, or local Ollama)",
-                "  Test AI Connection   - verify your AI setup works",
-                "  Edit Presets File    - customize presets manually",
-                "  Reload Presets       - reload after manual edits",
-                "",
-                "================================================",
+                "  AI Identify Model   Auto-detect optimal settings",
+                "  AI Enhance Prompt   Improve your prompt with AI",
+                "  Scan for Models     Add newly-downloaded models",
+                "  New Random Seed     Fresh random seed",
+                "  Reuse Last Seed     Recall the previous seed",
+                "  AI Settings         Configure provider",
+                "  Test AI Connection  Verify your AI setup",
+                "  Edit Presets File   Show presets.json path",
+                "  Reload Presets      Reload after manual edits",
             ].join("\n");
             if (!getName(node)) {
                 showText(node, welcome);
@@ -821,46 +820,11 @@ app.registerExtension({
             pushCurrentValues();
         }, { serialize: false });
 
-        node.addWidget("button", "Copy Seed", "", async () => {
-            const seedW = node.widgets?.find(w => w.name === "seed");
-            if (seedW) {
-                try {
-                    await navigator.clipboard.writeText(String(seedW.value));
-                    showText(node, `Seed copied: ${seedW.value}`);
-                } catch (e) {
-                    showText(node, `Seed: ${seedW.value} (copy manually)`);
-                }
-            }
-        }, { serialize: false });
+        /* Copy/Paste seed is handled via ComfyUI's native right-click menu
+         * on the seed widget. Show Model Info is redundant - info updates
+         * live in the info panel when model changes. Removed for clarity. */
 
-        node.addWidget("button", "Paste Seed", "", async () => {
-            try {
-                const text = await navigator.clipboard.readText();
-                const parsed = parseInt(text.trim(), 10);
-                if (!isNaN(parsed) && parsed >= 0) {
-                    setWidget(node, "seed", parsed);
-                    pushCurrentValues();
-                    showText(node, `Seed pasted: ${parsed}`);
-                } else {
-                    showText(node, "Clipboard doesn't contain a valid seed number.");
-                }
-            } catch (e) {
-                showText(node, "Can't read clipboard. Check browser permissions.");
-            }
-        }, { serialize: false });
-
-        /* (f) Show Model Info */
-        node.addWidget("button", "Show Model Info", "", async () => {
-            const n = getName(node);
-            if (!n) { showText(node, "No model selected"); return; }
-            showText(node, "Loading...");
-            try {
-                const i = await fetchInfo(n);
-                showText(node, formatInfo(i, checkConnections(node, i)));
-            } catch (e) { showText(node, "Error: " + e.message); }
-        }, { serialize: false });
-
-        /* (g) Scan for New Models */
+        /* (f) Scan for New Models */
         node.addWidget("button", "Scan for New Models", "", async () => {
             showText(node, "Scanning model directories...");
             try {
@@ -1117,7 +1081,6 @@ app.registerExtension({
             /* Model selection */
             "model",
             "AI Identify Model",
-            "Show Model Info",
             "Scan for New Models",
 
             /* Prompt tools */
@@ -1130,19 +1093,17 @@ app.registerExtension({
             "positive_prompt",
             "negative_prompt",
 
-            /* Seed + tools */
-            "seed",
-            "New Random Seed",
-            "Reuse Last Seed",
-            "Copy Seed",
-            "Paste Seed",
-
             /* Generation settings */
             "width",
             "height",
             "steps",
             "cfg",
             "guidance",
+
+            /* Seed + tools (near generation settings since they affect output) */
+            "seed",
+            "New Random Seed",
+            "Reuse Last Seed",
 
             /* Advanced */
             "weight_dtype",

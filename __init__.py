@@ -1307,56 +1307,55 @@ class TheLastModelSwitcher(io.ComfyNode):
 
         # ── Build info text ──
         custom_info = pcfg.get("info_text", "")
+        hr = "─" * 46
+        model_file = pcfg.get("diffusion_model") or pcfg.get("checkpoint", "N/A")
+        clip_text = ", ".join(clip_files) if clip_files else "from checkpoint"
 
         info = [
-            f"{'=' * 50}",
-            f"  THE LAST MODEL SWITCHER",
-            f"  {preset_name}",
-            f"{'=' * 50}",
-            "",
-            pcfg.get("description", ""),
-            "",
-            f"  Model:      {pcfg.get('diffusion_model') or pcfg.get('checkpoint', 'N/A')}",
-            f"  CLIP:       {', '.join(clip_files) if clip_files else 'from checkpoint'} ({pcfg.get('clip_type', 'N/A')})",
-            f"  VAE:        {pcfg.get('vae') or 'from checkpoint'}",
-            "",
-            f"  Resolution: {width} x {height}  ({target_mp:.2f} MP)",
-            "",
-            f"{'~' * 50}",
-            f"  RECOMMENDED SETTINGS",
-            f"{'~' * 50}",
-            f"  Sampler:    {rec_sampler}",
-            f"  Scheduler:  {rec_scheduler}",
-            f"  Steps:      {out_steps}",
-            f"  CFG:        {out_cfg}",
+            f"▸ {preset_name}",
         ]
-        if guidance_value > 0:
-            info.append(f"  Guidance:   {guidance_value}")
-        if is_flux:
-            info.append(f"  ModelSamplingFlux: applied (shift auto-calculated)")
-            if guidance_value > 0:
-                info.append(f"  FluxGuidance: applied to positive conditioning (no extra node needed)")
-        if neg_support:
-            info.append(f"  Neg prompt: supported (output encoded)")
-        else:
-            info.append(f"  Neg prompt: not used (empty conditioning output)")
+        if pcfg.get("description"):
+            info.append(f"  {pcfg.get('description')}")
+
+        info += [
+            "",
+            hr,
+            f"  model    {model_file}",
+            f"  clip     {clip_text} ({pcfg.get('clip_type', 'N/A')})",
+            f"  vae      {pcfg.get('vae') or 'from checkpoint'}",
+            f"  size     {width} × {height}  ({target_mp:.2f} MP)",
+            "",
+            hr,
+            "  Sampler settings",
+            hr,
+            f"  sampler    {rec_sampler} / {rec_scheduler}",
+            f"  steps      {out_steps}",
+            f"  cfg        {out_cfg}",
+        ]
+        if guidance_value > 0 and is_flux:
+            info.append(f"  guidance   {guidance_value} (baked into positive)")
+        info.append(f"  negative   {'used' if neg_support else 'not used (Flux)'}")
+
         if custom_info:
             info.append("")
             info.append(f"  {custom_info}")
 
+        # Warnings
+        warnings = []
         missing = _validate_preset(preset_name, pcfg)
         if missing:
+            warnings.append(f"Missing files: {', '.join(missing)}")
+        if warnings:
             info.append("")
-            info.append(f"  WARNING: Missing files: {', '.join(missing)}")
+            info.append(hr)
+            info.append("  Warnings")
+            info.append(hr)
+            for w in warnings:
+                info.append(f"  • {w}")
 
         if cache_status:
             info.append("")
-            info.append(f"  Cache: {' | '.join(cache_status)}")
-
-        info.append("")
-        info.append(f"{'=' * 50}")
-        info.append("  BY MAXOMARAI")
-        info.append(f"{'=' * 50}")
+            info.append(f"  Cache: {' • '.join(cache_status)}")
 
         # ── Output labels with values ──
         output_values = {
