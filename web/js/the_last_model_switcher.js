@@ -324,6 +324,9 @@ app.registerExtension({
             }
             const vals = msg?.output_values?.[0];
             if (vals && this.outputs) {
+                /* Store last seed for "Reuse Last Seed" */
+                if (vals.seed) this._lastSeed = parseInt(vals.seed, 10);
+
                 const isFlux = vals.is_flux;
 
                 for (let i = 0; i < this.outputs.length; i++) {
@@ -662,8 +665,51 @@ app.registerExtension({
             showText(node, "Enhanced prompt applied! You can edit it further if needed.");
         }, { serialize: false });
 
-        /* (e) positive_prompt, negative_prompt, seed, width, height, steps, cfg, guidance
-         *     are defined in the Python schema and appear automatically. */
+        /* (e) Seed tools */
+        node._lastSeed = null;
+
+        node.addWidget("button", "New Random Seed", "", () => {
+            const newSeed = Math.floor(Math.random() * 0xFFFFFFFFFFFF);
+            setWidget(node, "seed", newSeed);
+            pushCurrentValues();
+        }, { serialize: false });
+
+        node.addWidget("button", "Reuse Last Seed", "", () => {
+            if (node._lastSeed === null) {
+                showText(node, "No previous seed to reuse. Run the workflow first.");
+                return;
+            }
+            setWidget(node, "seed", node._lastSeed);
+            pushCurrentValues();
+        }, { serialize: false });
+
+        node.addWidget("button", "Copy Seed", "", async () => {
+            const seedW = node.widgets?.find(w => w.name === "seed");
+            if (seedW) {
+                try {
+                    await navigator.clipboard.writeText(String(seedW.value));
+                    showText(node, `Seed copied: ${seedW.value}`);
+                } catch (e) {
+                    showText(node, `Seed: ${seedW.value} (copy manually)`);
+                }
+            }
+        }, { serialize: false });
+
+        node.addWidget("button", "Paste Seed", "", async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                const parsed = parseInt(text.trim(), 10);
+                if (!isNaN(parsed) && parsed >= 0) {
+                    setWidget(node, "seed", parsed);
+                    pushCurrentValues();
+                    showText(node, `Seed pasted: ${parsed}`);
+                } else {
+                    showText(node, "Clipboard doesn't contain a valid seed number.");
+                }
+            } catch (e) {
+                showText(node, "Can't read clipboard. Check browser permissions.");
+            }
+        }, { serialize: false });
 
         /* (f) Show Model Info */
         node.addWidget("button", "Show Model Info", "", async () => {
@@ -832,80 +878,88 @@ app.registerExtension({
         }, { serialize: false });
 
         /* ═══════════════════════════════════════════════════
-         * REORDER WIDGETS for logical layout:
+         * REORDER WIDGETS
          *
-         *   model (DynamicCombo + sub-inputs)
-         *   AI Identify Model        \
-         *   Show Model Info            > model tools
-         *   Scan for New Models       /
-         *   enhance_style             \
-         *   AI Enhance Prompt          > prompt tools
-         *   Apply Enhanced Prompt     /
+         * Schema widgets (from Python) appear first in order.
+         * JS-added buttons need to be moved to logical positions.
+         *
+         * Desired layout:
+         *   model (+ sub-inputs)
+         *   [AI Identify Model]       \
+         *   [Show Model Info]          > model tools
+         *   [Scan for New Models]     /
+         *   [enhance_style]           \
+         *   [AI Enhance Prompt]        > prompt tools
+         *   [Apply Enhanced Prompt]   /
          *   positive_prompt
          *   negative_prompt
          *   seed
+         *   [New Random Seed]         \
+         *   [Reuse Last Seed]          > seed tools
+         *   [Copy Seed]               |
+         *   [Paste Seed]             /
          *   width, height, steps, cfg, guidance
          *   weight_dtype (advanced)
-         *   AI Settings               \
-         *   Edit Presets File          > admin tools
-         *   Reload Presets            /
+         *   [AI Settings]             \
+         *   [Edit Presets File]        > admin tools
+         *   [Reload Presets]          /
          *   _tlms_info (info panel)
          * ═══════════════════════════════════════════════════ */
         requestAnimationFrame(() => {
             if (!node.widgets || node.widgets.length < 5) return;
 
-            const byName = {};
-            for (const w of node.widgets) {
-                byName[w.name] = w;
-            }
+            const byName = (name) => node.widgets.find(w => w.name === name);
+            const findBtn = (text) => node.widgets.find(w => w.type === "button" && w.name === text);
 
-            /* Find the button widgets by their display text */
-            const findBtn = (text) => node.widgets.find(
-                w => w.type === "button" && w.name === text
-            );
+            /* Group widgets by where they should go */
+            const modelTools = [
+                findBtn("AI Identify Model"),
+                findBtn("Show Model Info"),
+                findBtn("Scan for New Models"),
+            ].filter(Boolean);
 
-            const btnIdentify = findBtn("AI Identify Model");
-            const btnShowInfo = findBtn("Show Model Info");
-            const btnScan = findBtn("Scan for New Models");
-            const comboStyle = byName["enhance_style"];
-            const btnEnhance = findBtn("AI Enhance Prompt");
-            const btnApply = findBtn("Apply Enhanced Prompt");
-            const btnAiSettings = findBtn("AI Settings");
-            const btnEditPresets = findBtn("Edit Presets File");
-            const btnReload = findBtn("Reload Presets");
+            const promptTools = [
+                byName("enhance_style"),
+                findBtn("AI Enhance Prompt"),
+                findBtn("Apply Enhanced Prompt"),
+            ].filter(Boolean);
 
-            /* Widgets to insert before positive_prompt */
-            const beforePrompt = [comboStyle, btnEnhance, btnApply].filter(Boolean);
-            /* Widgets to insert after model (before positive_prompt, before prompt tools) */
-            const afterModel = [btnIdentify, btnShowInfo, btnScan].filter(Boolean);
-            /* Widgets to go at the end (before info panel) */
-            const adminTools = [btnAiSettings, btnEditPresets, btnReload].filter(Boolean);
+            const seedTools = [
+                findBtn("New Random Seed"),
+                findBtn("Reuse Last Seed"),
+                findBtn("Copy Seed"),
+                findBtn("Paste Seed"),
+            ].filter(Boolean);
 
-            /* Remove all movable widgets from current positions */
-            const toMove = new Set([...beforePrompt, ...afterModel, ...adminTools]);
-            const remaining = node.widgets.filter(w => !toMove.has(w));
+            const adminTools = [
+                findBtn("AI Settings"),
+                findBtn("Edit Presets File"),
+                findBtn("Reload Presets"),
+            ].filter(Boolean);
 
-            /* Find insertion points */
-            const posPromptIdx = remaining.findIndex(w => w.name === "positive_prompt");
-            const infoIdx = remaining.findIndex(w => w.name === "_tlms_info");
+            /* Remove all movable widgets */
+            const allMovable = new Set([...modelTools, ...promptTools, ...seedTools, ...adminTools]);
+            const ordered = node.widgets.filter(w => !allMovable.has(w));
 
-            if (posPromptIdx >= 0) {
-                /* Insert prompt tools right before positive_prompt */
-                remaining.splice(posPromptIdx, 0, ...beforePrompt);
-                /* Insert model tools before prompt tools (= before positive_prompt, before beforePrompt) */
-                const newPosIdx = remaining.findIndex(w => w.name === "positive_prompt");
-                remaining.splice(newPosIdx - beforePrompt.length, 0, ...afterModel);
-            }
+            /* Helper: insert group before a named widget */
+            const insertBefore = (arr, targetName, group) => {
+                const idx = arr.findIndex(w => w.name === targetName);
+                if (idx >= 0) arr.splice(idx, 0, ...group);
+            };
 
-            /* Insert admin tools before info panel (or at end) */
-            const finalInfoIdx = remaining.findIndex(w => w.name === "_tlms_info");
-            if (finalInfoIdx >= 0) {
-                remaining.splice(finalInfoIdx, 0, ...adminTools);
-            } else {
-                remaining.push(...adminTools);
-            }
+            /* Helper: insert group after a named widget */
+            const insertAfter = (arr, targetName, group) => {
+                const idx = arr.findIndex(w => w.name === targetName);
+                if (idx >= 0) arr.splice(idx + 1, 0, ...group);
+            };
 
-            node.widgets = remaining;
+            /* Insert in reverse order of position (bottom-up) so indices stay valid */
+            insertBefore(ordered, "_tlms_info", adminTools);
+            insertAfter(ordered, "seed", seedTools);
+            insertBefore(ordered, "positive_prompt", promptTools);
+            insertBefore(ordered, "positive_prompt", modelTools);
+
+            node.widgets = ordered;
             node.setDirtyCanvas(true, true);
         });
     },
