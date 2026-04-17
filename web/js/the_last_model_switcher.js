@@ -15,8 +15,7 @@ const OUTPUT_MAP = {
     5: "height",
     6: "steps",
     7: "cfg",
-    8: "guidance",
-    9: "seed",
+    8: "seed",
 };
 
 /* ─── Find a widget by name (handles DynamicCombo prefix variants) ─── */
@@ -314,7 +313,8 @@ app.registerExtension({
     async beforeRegisterNodeDef(nodeType, nodeData) {
         if (nodeData.name !== "TheLastModelSwitcher") return;
 
-        const OUTPUT_LABELS = ["MODEL", "VAE", "positive", "negative", "width", "height", "steps", "cfg", "guidance", "seed"];
+        /* Output indices: 0=model, 1=vae, 2=positive, 3=negative, 4=width, 5=height, 6=steps, 7=cfg, 8=seed */
+        const OUTPUT_LABELS = ["model", "vae", "positive", "negative", "width", "height", "steps", "cfg", "seed"];
 
         const ox = nodeType.prototype.onExecuted;
         nodeType.prototype.onExecuted = function (msg) {
@@ -324,10 +324,21 @@ app.registerExtension({
             }
             const vals = msg?.output_values?.[0];
             if (vals && this.outputs) {
+                const isFlux = vals.is_flux;
+
                 for (let i = 0; i < this.outputs.length; i++) {
                     const out = this.outputs[i];
                     const baseName = OUTPUT_LABELS[i];
-                    if (baseName && vals[baseName] !== undefined) {
+                    if (!baseName) continue;
+
+                    /* Dynamic labels for positive/negative based on model type */
+                    if (baseName === "positive") {
+                        out.label = isFlux
+                            ? `positive (+guidance ${vals.guidance_value || ""})`
+                            : "positive";
+                    } else if (baseName === "negative") {
+                        out.label = isFlux ? "negative (unused)" : "negative";
+                    } else if (vals[baseName] !== undefined) {
                         out.label = `${baseName}: ${vals[baseName]}`;
                     }
                 }
@@ -436,7 +447,6 @@ app.registerExtension({
                 height: String(getVal("height") || ""),
                 steps: String(getVal("steps") || ""),
                 cfg: String(getVal("cfg") || ""),
-                guidance: String(getVal("guidance") || ""),
                 seed: String(getVal("seed") || ""),
             };
             pushValuesToConnectedNodes(node, vals);

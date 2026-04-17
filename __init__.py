@@ -985,18 +985,16 @@ class TheLastModelSwitcher(io.ComfyNode):
                     optional=True, advanced=True),
             ],
             outputs=[
-                io.Model.Output(display_name="MODEL"),
-                io.Vae.Output(display_name="VAE"),
+                io.Model.Output(display_name="model"),
+                io.Vae.Output(display_name="vae"),
                 io.Conditioning.Output(display_name="positive",
-                    tooltip="Positive conditioning from your prompt. Connect to KSampler positive."),
+                    tooltip="Positive conditioning. FluxGuidance applied automatically for Flux models."),
                 io.Conditioning.Output(display_name="negative",
-                    tooltip="Negative conditioning. Empty for Flux models. Connect to KSampler negative."),
+                    tooltip="Negative conditioning. Empty for Flux models, safe to keep connected."),
                 io.Int.Output(display_name="width"),
                 io.Int.Output(display_name="height"),
                 io.Int.Output(display_name="steps"),
                 io.Float.Output(display_name="cfg"),
-                io.Float.Output(display_name="guidance",
-                    tooltip="Flux guidance value. Applied automatically to positive conditioning."),
                 io.Int.Output(display_name="seed",
                     tooltip="Seed value. Connect to KSampler seed input."),
             ],
@@ -1295,8 +1293,9 @@ class TheLastModelSwitcher(io.ComfyNode):
             "height": str(height),
             "steps": str(out_steps),
             "cfg": str(out_cfg),
-            "guidance": str(guidance_value),
             "seed": str(seed),
+            "is_flux": is_flux,
+            "guidance_value": str(guidance_value),
         }
 
         # ── Return NodeOutput ──
@@ -1305,7 +1304,6 @@ class TheLastModelSwitcher(io.ComfyNode):
             positive_cond, negative_cond,
             width, height,
             out_steps, out_cfg,
-            guidance_value,
             seed,
             ui={
                 "text": ("\n".join(info),),
