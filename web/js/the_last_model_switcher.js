@@ -603,10 +603,18 @@ app.registerExtension({
         }, { serialize: false });
 
         /* (b) enhance_style combo */
-        const enhanceStyles = ["enhance", "detailed", "concise", "creative", "fix", "custom..."];
+        const enhanceStyles = ["enhance", "detailed", "concise", "creative", "fix"];
         node.addWidget("combo", "enhance_style", enhanceStyles[0], () => {}, {
             values: enhanceStyles, serialize: false,
         });
+
+        /* Custom instruction field (optional, overrides style if filled) */
+        const customWidget = ComfyWidgets["STRING"](node, "enhance_instruction", ["STRING", { multiline: false }], app);
+        customWidget.widget.inputEl.placeholder = "Custom instruction (optional, overrides style)";
+        customWidget.widget.inputEl.style.fontSize = "10px";
+        customWidget.widget.inputEl.style.opacity = "0.8";
+        customWidget.widget.serialize = false;
+        customWidget.widget.value = "";
 
         /* (c) AI Enhance Prompt */
         node.addWidget("button", "AI Enhance Prompt", "", async () => {
@@ -620,12 +628,11 @@ app.registerExtension({
             }
 
             const styleW = node.widgets?.find(w => w.name === "enhance_style");
+            const instrW = node.widgets?.find(w => w.name === "enhance_instruction");
             let style = styleW?.value || "enhance";
-            let customInstruction = "";
+            let customInstruction = instrW?.value?.trim() || "";
 
-            if (style === "custom...") {
-                customInstruction = prompt("Describe how the AI should enhance your prompt:\n\n(e.g. 'Make it more cinematic', 'Add anime style tags', 'Translate to English and enhance')");
-                if (!customInstruction) return;
+            if (customInstruction) {
                 style = "custom";
             }
 
@@ -940,6 +947,7 @@ app.registerExtension({
 
             const promptTools = [
                 byName("enhance_style"),
+                byName("enhance_instruction"),
                 findBtn("AI Enhance Prompt"),
                 findBtn("Apply Enhanced Prompt"),
             ].filter(Boolean);
