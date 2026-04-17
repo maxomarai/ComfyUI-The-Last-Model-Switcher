@@ -366,13 +366,14 @@ app.registerExtension({
                 };
                 if (this._updateForModelType) this._updateForModelType(infoForLabels);
 
-                /* Trigger Vue reactivity for output labels */
+                /* Trigger Vue reactivity for output label mutations.
+                 * Must use in-place splice (not array reassignment). */
+                const snapshot = [...this.outputs];
+                this.outputs.splice(0, this.outputs.length, ...snapshot);
                 this.graph?.trigger?.("node:slot-label:changed", {
                     nodeId: this.id,
                     slotType: 1,
                 });
-                this.outputs = [...this.outputs];
-                this.setDirtyCanvas(true, true);
                 pushValuesToConnectedNodes(this, vals);
             }
         };
@@ -521,17 +522,21 @@ app.registerExtension({
             toggleWidget(guidanceW, isFlux);
             toggleWidget(negPromptW, negSupported);
 
-            /* Trigger Vue reactivity (ComfyUI V2 uses shallowReactive) */
+            /* Trigger Vue reactivity for output labels.
+             * ComfyUI V2 wraps outputs in shallowReactive - property
+             * mutations on items are not tracked. Splice in-place to
+             * force a structural change that Vue detects. */
+            if (node.outputs) {
+                const snapshot = [...node.outputs];
+                node.outputs.splice(0, node.outputs.length, ...snapshot);
+            }
             node.graph?.trigger?.("node:slot-label:changed", {
                 nodeId: node.id,
                 slotType: 1,
             });
-            if (node.outputs) node.outputs = [...node.outputs];
 
             /* Recompute node size to account for hidden widgets */
-            const sz = node.computeSize();
-            node.size[1] = sz[1];
-            node.setDirtyCanvas(true, true);
+            if (node.computeSize) node.setSize(node.computeSize());
         }
 
         async function handleChange(cur, prev) {
@@ -1145,8 +1150,13 @@ app.registerExtension({
                 }
             }
 
-            node.widgets = reordered;
-            node.setDirtyCanvas(true, true);
+            /* IMPORTANT: ComfyUI V2 wraps node.widgets in Vue's shallowReactive.
+             * Assigning node.widgets = [...] is a no-op or fails to trigger
+             * reactivity. Must mutate the existing array in place.
+             * See: rgthree's moveArrayItem pattern. */
+            node.widgets.splice(0, node.widgets.length, ...reordered);
+
+            if (node.computeSize) node.setSize(node.computeSize());
         });
     },
 });
