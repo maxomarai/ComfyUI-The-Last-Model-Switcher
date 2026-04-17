@@ -368,16 +368,16 @@ app.registerExtension({
                 "",
                 "  GETTING STARTED:",
                 "",
-                "  1. Select a model from the dropdown above",
+                "  1. Select a model from the dropdown",
                 "     (only models you have downloaded appear)",
                 "",
-                "  2. Write your prompt in the text fields",
+                "  2. Write your positive (and optionally negative) prompt",
                 "",
                 "  3. Connect outputs to your workflow:",
-                "     MODEL    -> KSampler (model)",
-                "     VAE      -> VAE Decode",
-                "     positive -> KSampler (positive)  [includes FluxGuidance]",
-                "     negative -> KSampler (negative)  [empty for Flux, safe to keep]",
+                "     model    -> KSampler (model)",
+                "     vae      -> VAE Decode",
+                "     positive -> KSampler (positive)  [+FluxGuidance for Flux]",
+                "     negative -> KSampler (negative)  [empty for Flux]",
                 "     width    -> EmptyLatentImage (width)",
                 "     height   -> EmptyLatentImage (height)",
                 "     steps    -> KSampler (steps)",
@@ -391,8 +391,12 @@ app.registerExtension({
                 "  AI Enhance Prompt    - improve your prompt with AI",
                 "  Show Model Info      - view current model details",
                 "  Scan for New Models  - find models in your folders",
+                "  New Random Seed      - generate a new random seed",
+                "  Reuse Last Seed      - use the previous execution seed",
+                "  Copy / Paste Seed    - share seeds via clipboard",
                 "  AI Settings          - configure AI provider & key",
                 "  Edit Presets File    - customize presets manually",
+                "  Reload Presets       - reload after manual edits",
                 "",
                 "================================================",
             ].join("\n");
@@ -404,7 +408,7 @@ app.registerExtension({
         /* ─── Polling: detect widget value changes ─── */
         let lastState = {
             model: "", resolution: "", megapixels: "", clip: "",
-            width: "", height: "", steps: "", cfg: "", guidance: "",
+            width: "", height: "", steps: "", cfg: "", guidance: "", seed: "",
         };
         let updateTimer = null;
 
@@ -517,7 +521,7 @@ app.registerExtension({
             }
         }
 
-        /* Poll for widget value changes */
+        /* Poll for widget value changes (500ms) */
         const pollInterval = setInterval(() => {
             if (!node.graph) { clearInterval(pollInterval); return; }
             const cur = getCurrentState();
@@ -528,7 +532,7 @@ app.registerExtension({
             }
         }, 500);
 
-        /* Poll for connection changes -> update warnings */
+        /* Poll for connection changes (2s) -> update warnings */
         let lastConnectionHash = "";
         const connectionPoll = setInterval(() => {
             if (!node.graph) { clearInterval(connectionPoll); return; }
@@ -552,6 +556,14 @@ app.registerExtension({
                 }
             }
         }, 2000);
+
+        /* Clean up intervals when node is removed */
+        const onRemoved = node.onRemoved;
+        node.onRemoved = function () {
+            clearInterval(pollInterval);
+            clearInterval(connectionPoll);
+            onRemoved?.apply(this, arguments);
+        };
 
         /* Fallback: onWidgetChanged */
         const ow = node.onWidgetChanged;
@@ -622,13 +634,17 @@ app.registerExtension({
             values: enhanceStyles, serialize: false,
         });
 
-        /* Custom instruction field (optional, overrides style if filled) */
-        const customWidget = ComfyWidgets["STRING"](node, "enhance_instruction", ["STRING", { multiline: false }], app);
-        customWidget.widget.inputEl.placeholder = "Custom instruction (optional, overrides style)";
-        customWidget.widget.inputEl.style.fontSize = "10px";
-        customWidget.widget.inputEl.style.opacity = "0.8";
-        customWidget.widget.serialize = false;
-        customWidget.widget.value = "";
+        /* Custom instruction field (optional, overrides style if filled).
+         * Guarded against duplicate creation when nodeCreated fires on
+         * workflow load. */
+        if (!node.widgets?.find(w => w.name === "enhance_instruction")) {
+            const customWidget = ComfyWidgets["STRING"](node, "enhance_instruction", ["STRING", { multiline: false }], app);
+            customWidget.widget.inputEl.placeholder = "Custom instruction (optional, overrides style)";
+            customWidget.widget.inputEl.style.fontSize = "10px";
+            customWidget.widget.inputEl.style.opacity = "0.8";
+            customWidget.widget.serialize = false;
+            customWidget.widget.value = "";
+        }
 
         /* (c) AI Enhance Prompt */
         node.addWidget("button", "AI Enhance Prompt", "", async () => {
@@ -799,7 +815,7 @@ app.registerExtension({
 
             const curProvider = current.provider || "(not set)";
             const curModel = current.model || "(not set)";
-            const curHasKey = current.has_key ? "configured" : "not set";
+            const curHasKey = current.has_key ? "configured" : "not configured";
             const curBaseUrl = current.base_url || "";
 
             const providerInput = prompt(

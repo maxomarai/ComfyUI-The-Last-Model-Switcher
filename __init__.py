@@ -335,12 +335,12 @@ def _parse_ai_json(text: str) -> dict:
 
 @server.PromptServer.instance.routes.get("/the_last_model_switcher/ai_settings")
 async def get_ai_settings_api(request):
-    """Get current AI settings (without exposing full key)."""
+    """Return current AI settings. The API key itself is never returned -
+    only a boolean indicating whether one is configured."""
     config = _resolve_ai_config()
-    masked_key = config["api_key"][:8] + "..." if len(config["api_key"]) > 8 else ("set" if config["api_key"] else "not set")
     return web.json_response({
         "provider": config["provider"],
-        "api_key_status": masked_key,
+        "has_key": bool(config["api_key"]),
         "base_url": config["base_url"],
         "model": config["model"],
         "providers": list(_PROVIDER_DEFAULTS.keys()),
@@ -927,16 +927,16 @@ class TheLastModelSwitcher(io.ComfyNode):
     """
     The Last Model Switcher by Maxomarai
 
-    Switch models easily - auto-selects compatible CLIP, VAE, resolution,
-    and outputs recommended sampler settings. No more guessing which
-    text encoder goes with which model.
+    One-click model switching with auto-configured CLIP, VAE, resolution,
+    prompts, seed, and sampler settings.
 
     OUTPUTS:
-      MODEL / VAE                Core model components ready for KSampler
-      positive / negative        CONDITIONING from your prompt (negative is empty for Flux)
-      width / height             Resolution (preset, custom, or megapixel-scaled)
-      steps / cfg / guidance     Sampler settings (preset defaults or your overrides)
-      seed                       Seed value for reproducibility
+      model / vae              Core model components ready for KSampler
+      positive / negative      CONDITIONING encoded from your prompts
+                               (FluxGuidance baked into positive for Flux)
+      width / height           Resolution (preset, custom, or megapixel-scaled)
+      steps / cfg              Sampler settings (editable)
+      seed                     Seed value for reproducibility
     """
 
     @classmethod
@@ -1206,6 +1206,9 @@ class TheLastModelSwitcher(io.ComfyNode):
             m.add_object_patch("model_sampling", model_sampling)
             loaded_model = m
 
+        # Negative prompt support (computed once, used below)
+        neg_support = pcfg.get("negative_prompt_supported", not is_flux)
+
         # ── Encode prompts to CONDITIONING ──
         positive_cond = None
         negative_cond = None
@@ -1221,7 +1224,6 @@ class TheLastModelSwitcher(io.ComfyNode):
                     positive_cond, {"guidance": guidance_value})
 
             # Negative prompt (empty for Flux, user text for SD/SDXL)
-            neg_support = pcfg.get("negative_prompt_supported", not is_flux)
             neg_text = negative_prompt if (negative_prompt and neg_support) else ""
             neg_tokens = clip_obj.tokenize(neg_text)
             negative_cond = clip_obj.encode_from_tokens_scheduled(neg_tokens)
@@ -1235,7 +1237,6 @@ class TheLastModelSwitcher(io.ComfyNode):
                 pass
 
         # ── Build info text ──
-        neg_support = pcfg.get("negative_prompt_supported", not is_flux)
         custom_info = pcfg.get("info_text", "")
 
         info = [
@@ -1264,7 +1265,8 @@ class TheLastModelSwitcher(io.ComfyNode):
             info.append(f"  Guidance:   {guidance_value}")
         if is_flux:
             info.append(f"  ModelSamplingFlux: applied (shift auto-calculated)")
-            info.append(f"  FluxGuidance: applied to positive conditioning (no extra node needed)")
+            if guidance_value > 0:
+                info.append(f"  FluxGuidance: applied to positive conditioning (no extra node needed)")
         if neg_support:
             info.append(f"  Neg prompt: supported (output encoded)")
         else:
@@ -1320,3 +1322,6 @@ class TheLastModelSwitcherExtension(ComfyExtension):
 
 async def comfy_entrypoint() -> TheLastModelSwitcherExtension:
     return TheLastModelSwitcherExtension()
+
+
+__all__ = ["WEB_DIRECTORY", "comfy_entrypoint"]
