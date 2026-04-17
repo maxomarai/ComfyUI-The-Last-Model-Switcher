@@ -9,7 +9,9 @@ import { ComfyWidgets } from "../../../scripts/widgets.js";
 function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
 function aspectStr(w, h) { const g = gcd(w, h); return `${w / g}:${h / g}`; }
 
-/* ─── Output slot index -> value key mapping (no CLIP) ─── */
+/* ─── Output slot indices (no CLIP) ───
+ * 0=model, 1=vae, 2=positive, 3=negative, 4=width, 5=height, 6=steps, 7=cfg, 8=seed */
+const OUTPUT_LABELS = ["model", "vae", "positive", "negative", "width", "height", "steps", "cfg", "seed"];
 const OUTPUT_MAP = {
     4: "width",
     5: "height",
@@ -336,9 +338,6 @@ app.registerExtension({
 
     async beforeRegisterNodeDef(nodeType, nodeData) {
         if (nodeData.name !== "TheLastModelSwitcher") return;
-
-        /* Output indices: 0=model, 1=vae, 2=positive, 3=negative, 4=width, 5=height, 6=steps, 7=cfg, 8=seed */
-        const OUTPUT_LABELS = ["model", "vae", "positive", "negative", "width", "height", "steps", "cfg", "seed"];
 
         const ox = nodeType.prototype.onExecuted;
         nodeType.prototype.onExecuted = function (msg) {
