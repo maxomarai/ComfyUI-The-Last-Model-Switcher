@@ -90,7 +90,28 @@ Click **"Scan for New Models"** to detect models in your folders. The scanner re
 Detected models get correct presets automatically.
 
 ### AI Model Identification
-Click **"AI Identify Model"** to use Claude AI for precise model identification. It analyzes the filename, file size, and architecture to suggest optimal settings. Requires an Anthropic API key (prompted on first use, saved in ComfyUI settings).
+Click **"AI Identify Model"** to use AI for precise model identification. It analyzes the filename, file size, and architecture to suggest optimal settings.
+
+### AI-Powered Features (multi-provider)
+The node supports multiple AI providers for model identification and prompt enhancement:
+
+| Provider | Cost | API Key | Notes |
+|----------|------|---------|-------|
+| **Anthropic** (Claude) | Paid | Required | Best quality for model identification |
+| **OpenAI** (GPT) | Paid | Required | Fast, widely available |
+| **Ollama** | Free | Not needed | Runs locally on your machine |
+| **Custom** | Varies | Optional | Any OpenAI-compatible endpoint (LM Studio, vLLM, etc.) |
+
+Click **"AI Settings"** to configure. Click **"Test AI Connection"** to verify.
+
+#### Using Ollama (Local AI)
+1. Install from [ollama.com](https://ollama.com) and start it: `ollama serve`
+2. Pull a model: `ollama pull llama3.2`
+3. In the node, click **"AI Settings"** and choose `ollama` as provider
+4. Enter model name (e.g. `llama3.2`, `qwen2.5`, `mistral`)
+5. Click **"Test AI Connection"** to verify
+
+Good local models for prompt work: `llama3.2`, `qwen2.5:7b`, `mistral:7b`.
 
 ### Model Caching
 Models are cached between executions. Re-running with the same model skips disk loading entirely. Cache clears automatically when you switch to a different model, freeing VRAM.

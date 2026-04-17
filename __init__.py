@@ -230,16 +230,25 @@ _PROVIDER_DEFAULTS = {
         "base_url": "https://api.anthropic.com/v1/messages",
         "model": "claude-haiku-4-5-20251001",
         "env_key": "ANTHROPIC_API_KEY",
+        "requires_key": True,
     },
     "openai": {
         "base_url": "https://api.openai.com/v1/chat/completions",
         "model": "gpt-4o-mini",
         "env_key": "OPENAI_API_KEY",
+        "requires_key": True,
+    },
+    "ollama": {
+        "base_url": "http://localhost:11434/v1/chat/completions",
+        "model": "llama3.2",
+        "env_key": "",
+        "requires_key": False,
     },
     "custom": {
-        "base_url": "http://localhost:11434/v1/chat/completions",  # Ollama default
-        "model": "llama3",
+        "base_url": "http://localhost:11434/v1/chat/completions",
+        "model": "llama3.2",
         "env_key": "",
+        "requires_key": False,
     },
 }
 
@@ -282,7 +291,14 @@ def _resolve_ai_config() -> dict:
 
 
 def _call_ai(prompt_text: str, config: dict, max_tokens: int = 500) -> str:
-    """Call AI API (Anthropic or OpenAI-compatible). Returns response text."""
+    """Call AI API (Anthropic or OpenAI-compatible). Returns response text.
+
+    Supports:
+      - anthropic   Claude via Anthropic API (needs API key)
+      - openai      OpenAI GPT models (needs API key)
+      - ollama      Local LLM via Ollama (no key, OpenAI-compatible endpoint)
+      - custom      Any OpenAI-compatible endpoint (LM Studio, etc.)
+    """
     provider = config["provider"]
     api_key = config["api_key"]
     base_url = config["base_url"]
@@ -300,7 +316,7 @@ def _call_ai(prompt_text: str, config: dict, max_tokens: int = 500) -> str:
             "anthropic-version": "2023-06-01",
         }
     else:
-        # OpenAI-compatible format (works with OpenAI, Ollama, LM Studio, etc.)
+        # OpenAI-compatible format (OpenAI, Ollama, LM Studio, vLLM, etc.)
         req_body = json.dumps({
             "model": model,
             "max_tokens": max_tokens,
@@ -310,9 +326,13 @@ def _call_ai(prompt_text: str, config: dict, max_tokens: int = 500) -> str:
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
 
+    # Local providers may need longer timeout (first request loads the model)
+    is_local = provider in ("ollama", "custom") or "localhost" in base_url or "127.0.0.1" in base_url
+    timeout = 120 if is_local else 30
+
     req = urllib.request.Request(base_url, data=req_body, headers=headers)
 
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
         resp_data = json.loads(resp.read().decode("utf-8"))
 
     # Extract text from response (handle both Anthropic and OpenAI formats)
@@ -338,13 +358,54 @@ async def get_ai_settings_api(request):
     """Return current AI settings. The API key itself is never returned -
     only a boolean indicating whether one is configured."""
     config = _resolve_ai_config()
+    provider_defaults = _PROVIDER_DEFAULTS.get(config["provider"], {})
     return web.json_response({
         "provider": config["provider"],
         "has_key": bool(config["api_key"]),
+        "requires_key": provider_defaults.get("requires_key", True),
         "base_url": config["base_url"],
         "model": config["model"],
         "providers": list(_PROVIDER_DEFAULTS.keys()),
     })
+
+
+@server.PromptServer.instance.routes.post("/the_last_model_switcher/ai_test")
+async def ai_test_api(request):
+    """Test AI connection by sending a minimal prompt."""
+    config = _resolve_ai_config()
+    provider_defaults = _PROVIDER_DEFAULTS.get(config["provider"], {})
+
+    if not config["api_key"] and provider_defaults.get("requires_key", True):
+        return web.json_response({
+            "ok": False,
+            "error": f"No API key configured for {config['provider']}.",
+        }, status=400)
+
+    try:
+        response = _call_ai(
+            "Reply with just the word: OK",
+            config,
+            max_tokens=10,
+        )
+        return web.json_response({
+            "ok": True,
+            "provider": config["provider"],
+            "model": config["model"],
+            "response": response.strip()[:100],
+        })
+    except urllib.error.URLError as e:
+        hint = ""
+        if config["provider"] in ("ollama", "custom"):
+            hint = " (is Ollama running? Try: ollama serve)"
+        return web.json_response({
+            "ok": False,
+            "error": f"Connection failed: {e.reason if hasattr(e, 'reason') else e}{hint}",
+        }, status=500)
+    except Exception as e:
+        return web.json_response({
+            "ok": False,
+            "error": f"Test failed: {str(e)[:300]}",
+        }, status=500)
 
 
 @server.PromptServer.instance.routes.post("/the_last_model_switcher/ai_identify")
@@ -354,8 +415,12 @@ async def ai_identify_api(request):
     preset_name = data.get("preset_name", "")
     config = _resolve_ai_config()
 
-    if not config["api_key"] and config["provider"] != "custom":
-        return web.json_response({"error": "No API key configured. Click 'AI Settings' to set up your AI provider."}, status=400)
+    provider_defaults = _PROVIDER_DEFAULTS.get(config["provider"], {})
+    if not config["api_key"] and provider_defaults.get("requires_key", True):
+        return web.json_response({
+            "error": f"No API key configured for {config['provider']}. "
+                     f"Click 'AI Settings' to set up your AI provider.",
+        }, status=400)
 
     presets = load_presets()
     if preset_name not in presets or presets[preset_name] is None:
@@ -459,8 +524,12 @@ async def enhance_prompt_api(request):
     custom_instruction = data.get("custom_instruction", "")
     config = _resolve_ai_config()
 
-    if not config["api_key"] and config["provider"] != "custom":
-        return web.json_response({"error": "No API key configured. Click 'AI Settings' to set up your AI provider."}, status=400)
+    provider_defaults = _PROVIDER_DEFAULTS.get(config["provider"], {})
+    if not config["api_key"] and provider_defaults.get("requires_key", True):
+        return web.json_response({
+            "error": f"No API key configured for {config['provider']}. "
+                     f"Click 'AI Settings' to set up your AI provider.",
+        }, status=400)
     if not prompt_text.strip():
         return web.json_response({"error": "No prompt to enhance."}, status=400)
 

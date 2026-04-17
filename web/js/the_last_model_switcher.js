@@ -419,7 +419,9 @@ app.registerExtension({
                 "  New Random Seed      - generate a new random seed",
                 "  Reuse Last Seed      - use the previous execution seed",
                 "  Copy / Paste Seed    - share seeds via clipboard",
-                "  AI Settings          - configure AI provider & key",
+                "  AI Settings          - configure AI provider (Anthropic,",
+                "                         OpenAI, or local Ollama)",
+                "  Test AI Connection   - verify your AI setup works",
                 "  Edit Presets File    - customize presets manually",
                 "  Reload Presets       - reload after manual edits",
                 "",
@@ -846,6 +848,17 @@ app.registerExtension({
             } catch (e) { showText(node, "Error scanning: " + e.message); }
         }, { serialize: false });
 
+        /* Helper: save a setting via ComfyUI's settings API */
+        async function saveSetting(key, value) {
+            try {
+                await fetch(`/settings/${key}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(value),
+                });
+            } catch (e) {}
+        }
+
         /* (h) AI Settings */
         node.addWidget("button", "AI Settings", "", async () => {
             let current = {};
@@ -854,94 +867,145 @@ app.registerExtension({
                 if (r.ok) current = await r.json();
             } catch (e) {}
 
-            const curProvider = current.provider || "(not set)";
-            const curModel = current.model || "(not set)";
-            const curHasKey = current.has_key ? "configured" : "not configured";
+            const curProvider = current.provider || "anthropic";
+            const curModel = current.model || "";
+            const curHasKey = current.has_key;
             const curBaseUrl = current.base_url || "";
 
+            /* Step 1: Choose provider */
             const providerInput = prompt(
-                `AI Settings\n` +
-                `Current: provider=${curProvider}, key=${curHasKey}, model=${curModel}\n\n` +
-                `Choose provider (anthropic / openai / custom):\n` +
-                `(Leave blank to keep current)`,
-                curProvider !== "(not set)" ? curProvider : ""
+                "AI PROVIDER\n\n" +
+                "Choose:\n" +
+                "  anthropic  - Claude (cloud, needs API key)\n" +
+                "  openai     - GPT models (cloud, needs API key)\n" +
+                "  ollama     - Local LLM via Ollama (free, no key)\n" +
+                "  custom     - Any OpenAI-compatible endpoint\n\n" +
+                `Current: ${curProvider} (key ${curHasKey ? "configured" : "not set"})\n` +
+                "(Leave blank to keep current)",
+                curProvider
             );
             if (providerInput === null) return;
 
-            const provider = providerInput.trim() || curProvider;
-            if (provider && provider !== "(not set)") {
-                try {
-                    await fetch("/settings/tlms.ai_provider", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(provider),
-                    });
-                } catch (e) {}
+            const provider = providerInput.trim().toLowerCase() || curProvider;
+            const validProviders = ["anthropic", "openai", "ollama", "custom"];
+            if (!validProviders.includes(provider)) {
+                showText(node, `Invalid provider: "${provider}"\nValid: ${validProviders.join(", ")}`);
+                return;
             }
+            await saveSetting("tlms.ai_provider", provider);
 
-            const apiKeyInput = prompt(
-                `Enter API key for ${provider}:\n` +
-                `(Leave blank to keep current key)`
-            );
-            if (apiKeyInput === null) return;
-
-            if (apiKeyInput.trim()) {
-                try {
-                    await fetch("/settings/tlms.ai_api_key", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(apiKeyInput.trim()),
-                    });
-                } catch (e) {}
-            }
-
-            const modelInput = prompt(
-                `Enter model name (e.g. claude-sonnet-4-20250514, gpt-4o):\n` +
-                `(Leave blank to keep current)`,
-                curModel !== "(not set)" ? curModel : ""
-            );
-            if (modelInput === null) return;
-
-            if (modelInput.trim()) {
-                try {
-                    await fetch("/settings/tlms.ai_model", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(modelInput.trim()),
-                    });
-                } catch (e) {}
-            }
-
-            if (provider === "custom") {
-                const baseUrlInput = prompt(
-                    `Enter base URL for custom provider:\n` +
-                    `(Leave blank to keep current)`,
-                    curBaseUrl || ""
+            /* Step 2: API key (skip for local providers) */
+            let apiKeyUpdated = false;
+            const needsKey = provider === "anthropic" || provider === "openai";
+            if (needsKey) {
+                const apiKeyInput = prompt(
+                    `API KEY for ${provider}\n\n` +
+                    (provider === "anthropic"
+                        ? "Get yours at console.anthropic.com"
+                        : "Get yours at platform.openai.com/api-keys") +
+                    "\n\n(Leave blank to keep current key)"
                 );
-                if (baseUrlInput !== null && baseUrlInput.trim()) {
-                    try {
-                        await fetch("/settings/tlms.ai_base_url", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(baseUrlInput.trim()),
-                        });
-                    } catch (e) {}
+                if (apiKeyInput === null) return;
+                if (apiKeyInput.trim()) {
+                    await saveSetting("tlms.ai_api_key", apiKeyInput.trim());
+                    apiKeyUpdated = true;
                 }
             }
 
+            /* Step 3: Model */
+            const defaultModelExamples = {
+                anthropic: "e.g. claude-haiku-4-5-20251001, claude-sonnet-4-5",
+                openai: "e.g. gpt-4o-mini, gpt-4o",
+                ollama: "e.g. llama3.2, qwen2.5, mistral",
+                custom: "model name per your endpoint",
+            };
+            const modelInput = prompt(
+                `MODEL NAME\n\n${defaultModelExamples[provider]}\n\n` +
+                "(Leave blank to keep current)",
+                curModel
+            );
+            if (modelInput === null) return;
+            if (modelInput.trim()) {
+                await saveSetting("tlms.ai_model", modelInput.trim());
+            }
+
+            /* Step 4: Base URL (for ollama/custom) */
+            let baseUrlUpdated = false;
+            if (provider === "ollama" || provider === "custom") {
+                const defaultUrl = "http://localhost:11434/v1/chat/completions";
+                const baseUrlInput = prompt(
+                    `BASE URL\n\n` +
+                    (provider === "ollama"
+                        ? `Default Ollama URL: ${defaultUrl}\n(Ollama usually runs on localhost:11434)`
+                        : "Enter the OpenAI-compatible endpoint URL") +
+                    "\n\n(Leave blank to use default)",
+                    curBaseUrl || defaultUrl
+                );
+                if (baseUrlInput !== null && baseUrlInput.trim()) {
+                    await saveSetting("tlms.ai_base_url", baseUrlInput.trim());
+                    baseUrlUpdated = true;
+                }
+            }
+
+            /* Summary */
             const lines = [];
-            lines.push("AI SETTINGS UPDATED");
+            lines.push("AI SETTINGS SAVED");
             lines.push("=".repeat(48));
             lines.push("");
-            lines.push(`  Provider:  ${provider}`);
-            lines.push(`  API Key:   ${apiKeyInput?.trim() ? "updated" : "unchanged"}`);
-            lines.push(`  Model:     ${modelInput?.trim() || curModel}`);
-            if (provider === "custom") {
-                lines.push(`  Base URL:  configured`);
+            lines.push(`  Provider: ${provider}`);
+            if (needsKey) {
+                lines.push(`  API Key:  ${apiKeyUpdated ? "updated" : (curHasKey ? "unchanged" : "not set")}`);
+            } else {
+                lines.push(`  API Key:  not needed (local provider)`);
+            }
+            lines.push(`  Model:    ${modelInput.trim() || curModel}`);
+            if (provider === "ollama" || provider === "custom") {
+                lines.push(`  URL:      ${baseUrlUpdated ? "updated" : "default/unchanged"}`);
             }
             lines.push("");
-            lines.push("Settings saved. AI features will use these.");
+            if (provider === "ollama") {
+                lines.push("Make sure Ollama is running:");
+                lines.push("  $ ollama serve");
+                lines.push("And the model is pulled:");
+                lines.push(`  $ ollama pull ${modelInput.trim() || "llama3.2"}`);
+                lines.push("");
+            }
+            lines.push("Click 'Test AI Connection' to verify it works.");
             showText(node, lines.join("\n"));
+        }, { serialize: false });
+
+        /* (h2) Test AI Connection */
+        node.addWidget("button", "Test AI Connection", "", async () => {
+            showText(node, "Testing AI connection...");
+            try {
+                const r = await fetch("/the_last_model_switcher/ai_test", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: "{}",
+                });
+                const d = await r.json();
+                const lines = [];
+                if (d.ok) {
+                    lines.push("AI CONNECTION OK");
+                    lines.push("=".repeat(48));
+                    lines.push("");
+                    lines.push(`  Provider: ${d.provider}`);
+                    lines.push(`  Model:    ${d.model}`);
+                    lines.push(`  Response: ${d.response}`);
+                    lines.push("");
+                    lines.push("AI features are ready to use.");
+                } else {
+                    lines.push("AI CONNECTION FAILED");
+                    lines.push("=".repeat(48));
+                    lines.push("");
+                    lines.push(d.error || "Unknown error");
+                    lines.push("");
+                    lines.push("Click 'AI Settings' to check your configuration.");
+                }
+                showText(node, lines.join("\n"));
+            } catch (e) {
+                showText(node, "Test failed: " + e.message);
+            }
         }, { serialize: false });
 
         /* (i) Edit Presets File */
@@ -1032,6 +1096,7 @@ app.registerExtension({
 
             const adminTools = [
                 findBtn("AI Settings"),
+                findBtn("Test AI Connection"),
                 findBtn("Edit Presets File"),
                 findBtn("Reload Presets"),
             ].filter(Boolean);
