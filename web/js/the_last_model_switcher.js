@@ -342,8 +342,10 @@ function showText(node, text) {
     requestAnimationFrame(() => {
         if (node.computeSize) {
             const sz = node.computeSize();
-            node.size[0] = Math.max(node.size[0], sz[0]);
-            node.size[1] = Math.max(node.size[1], sz[1]);
+            const minW = node._tlmsMinWidth || 500;
+            /* Never shrink width below user's current size or our minimum */
+            node.size[0] = Math.max(node.size[0] || 0, minW);
+            node.size[1] = Math.max(node.size[1] || 0, sz[1]);
         }
         node.setDirtyCanvas?.(true, true);
     });
@@ -399,8 +401,11 @@ app.registerExtension({
     nodeCreated(node) {
         if (node.comfyClass !== "TheLastModelSwitcher" && node.type !== "TheLastModelSwitcher") return;
 
-        /* Wider default - fits prompt fields and info panel comfortably */
-        node.size[0] = Math.max(node.size[0], 440);
+        /* Wider default - fits prompt fields and info panel comfortably.
+         * Stored so we never shrink below this on updates. */
+        const MIN_WIDTH = 500;
+        node._tlmsMinWidth = MIN_WIDTH;
+        node.size[0] = Math.max(node.size[0] || 0, MIN_WIDTH);
 
         /* ─── Welcome text ─── */
         requestAnimationFrame(() => {
@@ -518,17 +523,32 @@ app.registerExtension({
             const guidanceVal = info.guidance || 0;
             const negSupported = info.negative_prompt_supported !== false && !isFlux;
 
-            /* Update output labels */
+            /*
+             * Update output labels via per-item splice.
+             *
+             * ComfyUI V2 wraps outputs in Vue's shallowReactive(). Merely
+             * mutating `.label` on an existing object is NOT tracked - Vue
+             * only re-renders when the array is structurally changed OR when
+             * an index is reassigned. We replace each changed item in place,
+             * preserving its prototype and properties via Object.assign.
+             */
             if (node.outputs) {
                 for (let i = 0; i < node.outputs.length; i++) {
                     const out = node.outputs[i];
                     const baseName = OUTPUT_LABELS[i];
+                    let newLabel = null;
                     if (baseName === "positive") {
-                        out.label = isFlux && guidanceVal > 0
+                        newLabel = isFlux && guidanceVal > 0
                             ? `positive (+guidance ${guidanceVal})`
                             : "positive";
                     } else if (baseName === "negative") {
-                        out.label = negSupported ? "negative" : "negative (unused)";
+                        newLabel = negSupported ? "negative" : "negative (unused)";
+                    }
+                    if (newLabel !== null && newLabel !== out.label) {
+                        /* Clone object (preserves prototype) and update label */
+                        const proto = Object.getPrototypeOf(out);
+                        const replacement = Object.assign(Object.create(proto), out, { label: newLabel });
+                        node.outputs.splice(i, 1, replacement);
                     }
                 }
             }
@@ -539,21 +559,24 @@ app.registerExtension({
             toggleWidget(guidanceW, isFlux);
             toggleWidget(negPromptW, negSupported);
 
-            /* Trigger Vue reactivity for output labels.
-             * ComfyUI V2 wraps outputs in shallowReactive - property
-             * mutations on items are not tracked. Splice in-place to
-             * force a structural change that Vue detects. */
-            if (node.outputs) {
-                const snapshot = [...node.outputs];
-                node.outputs.splice(0, node.outputs.length, ...snapshot);
-            }
             node.graph?.trigger?.("node:slot-label:changed", {
                 nodeId: node.id,
                 slotType: 1,
             });
 
-            /* Recompute node size to account for hidden widgets */
-            if (node.computeSize) node.setSize(node.computeSize());
+            /*
+             * Update height only - NEVER shrink width below the user's
+             * current size or our minimum. Previously setSize(computeSize())
+             * reset width on every model change.
+             */
+            if (node.computeSize) {
+                const sz = node.computeSize();
+                const currentW = node.size[0] || 0;
+                const minW = node._tlmsMinWidth || 500;
+                node.size[0] = Math.max(currentW, minW);
+                node.size[1] = sz[1];
+            }
+            node.setDirtyCanvas?.(true, true);
         }
 
         async function handleChange(cur, prev) {
@@ -1151,7 +1174,13 @@ app.registerExtension({
              * See: rgthree's moveArrayItem pattern. */
             node.widgets.splice(0, node.widgets.length, ...reordered);
 
-            if (node.computeSize) node.setSize(node.computeSize());
+            /* Update height only, never shrink width */
+            if (node.computeSize) {
+                const sz = node.computeSize();
+                const minW = node._tlmsMinWidth || 500;
+                node.size[0] = Math.max(node.size[0] || 0, minW);
+                node.size[1] = sz[1];
+            }
         });
     },
 });
