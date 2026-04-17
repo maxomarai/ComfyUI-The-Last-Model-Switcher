@@ -1298,6 +1298,7 @@ class TheLastModelSwitcher(io.ComfyNode):
             "seed": str(seed),
             "is_flux": is_flux,
             "guidance_value": str(guidance_value),
+            "negative_prompt_supported": neg_support,
         }
 
         # ── Return NodeOutput ──

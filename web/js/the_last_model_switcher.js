@@ -101,6 +101,30 @@ function setWidget(node, name, value) {
     }
 }
 
+/* ─── Show/hide a widget (preserves value, just hides UI) ─── */
+function toggleWidget(widget, visible) {
+    if (!widget) return;
+    if (visible) {
+        if (widget._hiddenType !== undefined) {
+            widget.type = widget._hiddenType;
+            delete widget._hiddenType;
+        }
+        if (widget._hiddenComputeSize) {
+            widget.computeSize = widget._hiddenComputeSize;
+            delete widget._hiddenComputeSize;
+        } else {
+            delete widget.computeSize;
+        }
+    } else {
+        if (widget._hiddenType === undefined) {
+            widget._hiddenType = widget.type;
+            widget._hiddenComputeSize = widget.computeSize;
+        }
+        widget.type = "hidden";
+        widget.computeSize = () => [0, -4];
+    }
+}
+
 /* ─── Resolve width/height from preset info + resolution + megapixels ─── */
 function resolveWidthHeight(info, resName, mpStr) {
     let baseW = 1024, baseH = 1024;
@@ -335,12 +359,13 @@ app.registerExtension({
                     }
                 }
 
-                /* Update positive/negative labels based on model type */
+                /* Update labels and widget visibility based on model type */
                 const infoForLabels = {
                     is_flux: vals.is_flux,
                     guidance: parseFloat(vals.guidance_value) || 0,
+                    negative_prompt_supported: vals.negative_prompt_supported !== false,
                 };
-                if (this._updateOutputLabels) this._updateOutputLabels(infoForLabels);
+                if (this._updateForModelType) this._updateForModelType(infoForLabels);
 
                 /* Trigger Vue reactivity for output labels */
                 this.graph?.trigger?.("node:slot-label:changed", {
@@ -462,33 +487,49 @@ app.registerExtension({
             pushValuesToConnectedNodes(node, vals);
         }
 
-        /* Update output labels based on model type (Flux vs SD/SDXL).
-         * Also stored on node so onExecuted can call it. */
-        node._updateOutputLabels = updateOutputLabels;
-        function updateOutputLabels(info) {
-            if (!node.outputs || !info) return;
+        /* Update node appearance based on selected model type:
+         *  - Output labels: "positive (+guidance X)" for Flux
+         *  - Hide guidance widget for non-Flux models
+         *  - Hide negative prompt for Flux models (it's ignored)
+         * Stored on node so onExecuted can also call it. */
+        node._updateForModelType = updateForModelType;
+        function updateForModelType(info) {
+            if (!info) return;
             const isFlux = info.is_flux;
             const guidanceVal = info.guidance || 0;
+            const negSupported = info.negative_prompt_supported !== false && !isFlux;
 
-            for (let i = 0; i < node.outputs.length; i++) {
-                const out = node.outputs[i];
-                const baseName = OUTPUT_LABELS[i];
-                if (baseName === "positive") {
-                    out.label = isFlux && guidanceVal > 0
-                        ? `positive (+guidance ${guidanceVal})`
-                        : "positive";
-                } else if (baseName === "negative") {
-                    out.label = isFlux ? "negative (unused)" : "negative";
+            /* Update output labels */
+            if (node.outputs) {
+                for (let i = 0; i < node.outputs.length; i++) {
+                    const out = node.outputs[i];
+                    const baseName = OUTPUT_LABELS[i];
+                    if (baseName === "positive") {
+                        out.label = isFlux && guidanceVal > 0
+                            ? `positive (+guidance ${guidanceVal})`
+                            : "positive";
+                    } else if (baseName === "negative") {
+                        out.label = negSupported ? "negative" : "negative (unused)";
+                    }
                 }
             }
 
-            /* Trigger Vue reactivity (ComfyUI V2 uses shallowReactive outputs) */
+            /* Hide/show widgets based on relevance */
+            const guidanceW = node.widgets?.find(w => w.name === "guidance");
+            const negPromptW = node.widgets?.find(w => w.name === "negative_prompt");
+            toggleWidget(guidanceW, isFlux);
+            toggleWidget(negPromptW, negSupported);
+
+            /* Trigger Vue reactivity (ComfyUI V2 uses shallowReactive) */
             node.graph?.trigger?.("node:slot-label:changed", {
                 nodeId: node.id,
                 slotType: 1,
             });
-            /* Fallback: force array replacement to trigger shallowReactive */
-            node.outputs = [...node.outputs];
+            if (node.outputs) node.outputs = [...node.outputs];
+
+            /* Recompute node size to account for hidden widgets */
+            const sz = node.computeSize();
+            node.size[1] = sz[1];
             node.setDirtyCanvas(true, true);
         }
 
@@ -511,7 +552,7 @@ app.registerExtension({
                             updateResolution(node, i, cur.resolution, cur.megapixels);
                         }
 
-                        updateOutputLabels(i);
+                        updateForModelType(i);
                         showText(node, formatInfo(i, checkConnections(node, i)));
                         pushCurrentValues();
                     } catch (e) { showText(node, "Error: " + e.message); }
